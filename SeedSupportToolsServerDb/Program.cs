@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SeedSupportToolsServerDb;
 using Serilog.Events;
-using SupportToolsNewDataSeeding;
 using SupportToolsServerDbDataSeeding;
 using SupportToolsServerDbNewDataSeeding;
 using SystemToolsShared;
@@ -87,7 +86,7 @@ try
     var checkOnly = argParser.Switches.Contains("--CheckOnly");
 
     var seeder = new ProjectNewDataSeeder(logger,
-        new StsNewDataSeedersFabric(par.SecretDataFolder, par.JsonFolderName, stsDataSeederRepository),
+        new StsNewDataSeedersFabric(par.SecretDataFolder, stsDataSeederRepository),
         dataFixRepository, checkOnly);
 
     return seeder.SeedData() ? 0 : 1;

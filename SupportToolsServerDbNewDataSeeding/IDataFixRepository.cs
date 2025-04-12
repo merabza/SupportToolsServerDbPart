@@ -1,4 +1,4 @@
-﻿namespace SupportToolsNewDataSeeding;
+﻿namespace SupportToolsServerDbNewDataSeeding;
 
 public interface IDataFixRepository
 {

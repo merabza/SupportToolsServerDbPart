@@ -3,6 +3,7 @@
 using DatabaseToolsShared;
 using Microsoft.Extensions.Logging;
 using SupportToolsServerDb;
+using SupportToolsServerDb.Models;
 
 namespace SupportToolsServerDbDataSeeding;
 
@@ -12,5 +13,10 @@ public sealed class StsDataSeederRepository : DataSeederRepository, IStsDataSeed
     public StsDataSeederRepository(SupportToolsServerDbContext ctx, ILogger<StsDataSeederRepository> logger) : base(ctx,
         logger)
     {
+    }
+
+    public bool CreateApiKey(ApiKeyByRemoteIpAddress apiKey)
+    {
+        throw new System.NotImplementedException();
     }
 }

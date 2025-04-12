@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SupportToolsNewDataSeeding;
 using SupportToolsServerDb;
 using SupportToolsServerDbDataSeeding;
 using SupportToolsServerDbNewDataSeeding;
