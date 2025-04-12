@@ -1,8 +1,13 @@
+using System;
+using System.Linq;
+using Microsoft.AspNetCore.Builder;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-var app = builder.Build();
+// ReSharper disable once using
+using var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 

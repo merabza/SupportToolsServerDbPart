@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Folder Include="Json\" />
+    <Folder Include="Seeders\" />
   </ItemGroup>
 
 </Project>
