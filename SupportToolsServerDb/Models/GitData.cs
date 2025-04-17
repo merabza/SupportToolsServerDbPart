@@ -4,7 +4,7 @@ namespace SupportToolsServerDb.Models;
 
 public sealed class GitData
 {
-    private GitIgnoreFileType? _gitIgnoreFileType;
+    private GitIgnoreFileType? _gitIgnoreFileTypeNavigation;
     public int Id { get; set; }
     public required string GitAddress { get; set; }
     public required string Name { get; set; }
@@ -13,8 +13,8 @@ public sealed class GitData
     public GitIgnoreFileType GitIgnoreFileTypeNavigation
     {
         get =>
-            _gitIgnoreFileType ??
+            _gitIgnoreFileTypeNavigation ??
             throw new InvalidOperationException("Uninitialized property: " + nameof(GitIgnoreFileType));
-        set => _gitIgnoreFileType = value;
+        set => _gitIgnoreFileTypeNavigation = value;
     }
 }

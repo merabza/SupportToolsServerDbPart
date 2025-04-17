@@ -20,7 +20,7 @@ public class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKeyByRemo
 
     //private IStsDataSeederRepository Repo { get; }
 
-    protected override bool AdditionalCheck(List<ApiKeyByRemoteIpAddressSeedarModel> jMos)
+    protected override bool AdditionalCheck(List<ApiKeyByRemoteIpAddressSeedarModel> jsonData, List<ApiKeyByRemoteIpAddress> savedData)
     {
         var existingApiKeys = Repo.GetAll<ApiKeyByRemoteIpAddress>();
 
