@@ -16,7 +16,7 @@ namespace SupportToolsServerDbMigration.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -49,31 +49,35 @@ namespace SupportToolsServerDbMigration.Migrations
 
             modelBuilder.Entity("SupportToolsServerDb.Models.GitData", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("GdId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GdId"));
 
-                    b.Property<string>("GitAddress")
+                    b.Property<string>("GdFolderName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GdGitAddress")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
-                    b.Property<int>("GitIgnoreFileTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("GdName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                    b.Property<int>("GitIgnoreFileTypeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("GdId");
+
+                    b.HasIndex("GdName")
+                        .IsUnique();
 
                     b.HasIndex("GitIgnoreFileTypeId");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
 
                     b.ToTable("GitData");
                 });

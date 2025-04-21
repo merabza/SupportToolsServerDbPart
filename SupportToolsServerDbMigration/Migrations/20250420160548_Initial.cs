@@ -42,15 +42,16 @@ namespace SupportToolsServerDbMigration.Migrations
                 name: "GitData",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    GdId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    GitAddress = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    GdGitAddress = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    GdName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    GdFolderName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GitIgnoreFileTypeId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GitData", x => x.Id);
+                    table.PrimaryKey("PK_GitData", x => x.GdId);
                     table.ForeignKey(
                         name: "FK_GitData_GitIgnoreFileTypes_GitIgnoreFileTypeId",
                         column: x => x.GitIgnoreFileTypeId,
@@ -66,15 +67,15 @@ namespace SupportToolsServerDbMigration.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_GitData_GdName",
+                table: "GitData",
+                column: "GdName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_GitData_GitIgnoreFileTypeId",
                 table: "GitData",
                 column: "GitIgnoreFileTypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GitData_Name",
-                table: "GitData",
-                column: "Name",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_GitIgnoreFileTypes_Name",
