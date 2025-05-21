@@ -22,7 +22,7 @@ public class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKeyByRemo
 
     protected override bool AdditionalCheck(List<ApiKeyByRemoteIpAddressSeedarModel> jsonData, List<ApiKeyByRemoteIpAddress> savedData)
     {
-        var existingApiKeys = Repo.GetAll<ApiKeyByRemoteIpAddress>();
+        var existingApiKeys = DataSeederRepo.GetAll<ApiKeyByRemoteIpAddress>();
 
         var userToCreate = GetApiKeyModels().Select(apiKeyModel => new
         {
@@ -32,7 +32,7 @@ public class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKeyByRemo
                     sd.ApiKey == apiKeyModel.ApiKey && sd.RemoteIpAddress == apiKeyModel.RemoteIpAddress)
         }).Where(w => w.existingApiKeyByIpAddress == null).Select(s => s.apiKeyModel).ToList();
 
-        return Repo.CreateEntities(userToCreate.Select(x =>
+        return DataSeederRepo.CreateEntities(userToCreate.Select(x =>
             new ApiKeyByRemoteIpAddress { ApiKey = x.ApiKey, RemoteIpAddress = x.RemoteIpAddress }).ToList());
     }
 
