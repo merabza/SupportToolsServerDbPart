@@ -86,7 +86,7 @@ try
     var checkOnly = argParser.Switches.Contains("--CheckOnly");
 
     var seeder = new ProjectNewDataSeeder(logger,
-        new StsNewDataSeedersFabric(par.SecretDataFolder, stsDataSeederRepository),
+        new StsNewDataSeedersFactory(par.SecretDataFolder, stsDataSeederRepository),
         dataFixRepository, checkOnly);
 
     return seeder.SeedData() ? 0 : 1;

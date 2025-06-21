@@ -7,14 +7,14 @@ namespace SupportToolsServerDbDataSeeding;
 public /*open*/ class ProjectDataSeeder : DataSeederBase
 {
     private readonly bool _checkOnly;
-    private readonly StsDataSeedersFabric _dataSeedersFabric;
+    private readonly StsDataSeedersFactory _dataSeedersFactory;
     protected readonly ILogger Logger;
 
-    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFabric dataSeedersFabric, bool checkOnly) :
+    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory, bool checkOnly) :
         base(checkOnly)
     {
         Logger = logger;
-        _dataSeedersFabric = dataSeedersFabric;
+        _dataSeedersFactory = dataSeedersFactory;
         _checkOnly = checkOnly;
     }
 
@@ -30,7 +30,7 @@ public /*open*/ class ProjectDataSeeder : DataSeederBase
         Logger.LogInformation("Seeding ApiKeys");
 
         //1 ActantGrammarCases
-        if (!Use(_dataSeedersFabric.CreateApiKeysSeeder())) 
+        if (!Use(_dataSeedersFactory.CreateApiKeysSeeder())) 
             return false;
 
         Console.WriteLine("DataSeederCreator.Run Finished");
