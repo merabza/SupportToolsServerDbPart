@@ -6,7 +6,7 @@ using SupportToolsServerDbDataSeeding.Models;
 
 namespace SupportToolsServerDbDataSeeding.Seeders;
 
-public class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKeyByRemoteIpAddressSeedarModel>
+public sealed class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKeyByRemoteIpAddressSeedarModel>
 {
     private readonly string _secretDataFolder;
 
