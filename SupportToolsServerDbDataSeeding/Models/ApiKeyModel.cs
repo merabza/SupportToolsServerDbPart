@@ -1,6 +1,6 @@
 ﻿namespace SupportToolsServerDbDataSeeding.Models;
 
-public class ApiKeyModel
+public sealed class ApiKeyModel
 {
     //აპის გასაღები
     public required string ApiKey { get; set; }

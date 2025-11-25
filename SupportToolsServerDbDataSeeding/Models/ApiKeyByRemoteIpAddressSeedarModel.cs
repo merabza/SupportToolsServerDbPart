@@ -1,6 +1,6 @@
 ﻿namespace SupportToolsServerDbDataSeeding.Models;
 
-public class ApiKeyByRemoteIpAddressSeedarModel
+public sealed class ApiKeyByRemoteIpAddressSeedarModel
 {
     
 }
