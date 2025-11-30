@@ -9,7 +9,7 @@ public sealed class ProjectNewDataSeeder : ProjectDataSeeder
 
     // ReSharper disable once ConvertToPrimaryConstructor
     public ProjectNewDataSeeder(ILogger logger, StsNewDataSeedersFactory dataSeedersFactory,
-        IDataFixRepository dataFixRepository, bool checkOnly) : base(logger, dataSeedersFactory, checkOnly)
+        IDataFixRepository dataFixRepository) : base(logger, dataSeedersFactory)
     {
         _dataFixRepository = dataFixRepository;
     }

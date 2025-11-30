@@ -6,16 +6,14 @@ namespace SupportToolsServerDbDataSeeding;
 
 public /*open*/ class ProjectDataSeeder : DataSeederBase
 {
-    private readonly bool _checkOnly;
     private readonly StsDataSeedersFactory _dataSeedersFactory;
     protected readonly ILogger Logger;
 
-    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory, bool checkOnly) :
-        base(checkOnly)
+    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory) :
+        base(false)
     {
         Logger = logger;
         _dataSeedersFactory = dataSeedersFactory;
-        _checkOnly = checkOnly;
     }
 
     public override bool SeedData()

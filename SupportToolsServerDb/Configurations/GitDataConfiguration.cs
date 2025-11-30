@@ -10,9 +10,11 @@ public sealed class GitDataConfiguration : IEntityTypeConfiguration<GitData>
     {
         builder.HasKey(e => e.GdId);
         builder.HasIndex(e => e.GdName).IsUnique();
+        builder.HasIndex(e => e.GdGitAddress).IsUnique();
 
         builder.Property(e => e.GdName).IsRequired().HasMaxLength(50);
         builder.Property(e => e.GdGitAddress).IsRequired().HasMaxLength(128);
+        builder.Property(e => e.GdFolderName).IsRequired().HasMaxLength(128);
         builder.Property(e => e.GitIgnoreFileTypeId).IsRequired();
 
         builder.HasOne(h => h.GitIgnoreFileTypeNavigation).WithMany(w => w.GitData)

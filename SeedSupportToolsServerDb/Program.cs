@@ -13,8 +13,7 @@ ILogger<Program>? logger = null;
 try
 {
     Console.WriteLine("Seeds data in new database");
-    var argParser =
-        new ArgumentsParser<SeederParameters>(args, nameof(SeedSupportToolsServerDb), null, "--CheckOnly");
+    var argParser = new ArgumentsParser<SeederParameters>(args, nameof(SeedSupportToolsServerDb), null);
     switch (argParser.Analysis())
     {
         case EParseResult.Ok: break;
@@ -83,11 +82,8 @@ try
         return 13;
     }
 
-    var checkOnly = argParser.Switches.Contains("--CheckOnly");
-
     var seeder = new ProjectNewDataSeeder(logger,
-        new StsNewDataSeedersFactory(par.SecretDataFolder, stsDataSeederRepository),
-        dataFixRepository, checkOnly);
+        new StsNewDataSeedersFactory(par.SecretDataFolder, stsDataSeederRepository), dataFixRepository);
 
     return seeder.SeedData() ? 0 : 1;
 }
