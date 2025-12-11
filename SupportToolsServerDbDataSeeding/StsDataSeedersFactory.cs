@@ -5,15 +5,15 @@ namespace SupportToolsServerDbDataSeeding;
 
 public /*open*/ class StsDataSeedersFactory
 {
-    protected IStsDataSeederRepository Repo { get; }
     protected readonly string SecretDataFolder;
-
 
     protected StsDataSeedersFactory(string secretDataFolder, IStsDataSeederRepository repo)
     {
         SecretDataFolder = secretDataFolder;
         Repo = repo;
     }
+
+    protected IStsDataSeederRepository Repo { get; }
 
     public ITableDataSeeder CreateApiKeysSeeder()
     {

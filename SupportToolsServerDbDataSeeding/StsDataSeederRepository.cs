@@ -1,5 +1,6 @@
 //Created by DataSeederRepositoryCreator at 4/7/2025 12:05:19 AM
 
+using System;
 using DatabaseToolsShared;
 using Microsoft.Extensions.Logging;
 using SupportToolsServerDb;
@@ -17,6 +18,6 @@ public sealed class StsDataSeederRepository : DataSeederRepository, IStsDataSeed
 
     public bool CreateApiKey(ApiKeyByRemoteIpAddress apiKey)
     {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 }

@@ -6,11 +6,10 @@ namespace SupportToolsServerDbDataSeeding;
 
 public /*open*/ class ProjectDataSeeder : DataSeederBase
 {
-    private readonly StsDataSeedersFactory _dataSeedersFactory;
     protected readonly ILogger Logger;
+    private readonly StsDataSeedersFactory _dataSeedersFactory;
 
-    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory) :
-        base(false)
+    protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory) : base(false)
     {
         Logger = logger;
         _dataSeedersFactory = dataSeedersFactory;
@@ -28,7 +27,7 @@ public /*open*/ class ProjectDataSeeder : DataSeederBase
         Logger.LogInformation("Seeding ApiKeys");
 
         //1 ActantGrammarCases
-        if (!Use(_dataSeedersFactory.CreateApiKeysSeeder())) 
+        if (!Use(_dataSeedersFactory.CreateApiKeysSeeder()))
             return false;
 
         Console.WriteLine("DataSeederCreator.Run Finished");
