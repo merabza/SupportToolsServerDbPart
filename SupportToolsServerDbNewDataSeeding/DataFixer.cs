@@ -4,8 +4,8 @@ namespace SupportToolsServerDbNewDataSeeding;
 
 internal sealed class DataFixer
 {
-    private readonly ILogger _logger;
     private readonly IDataFixRepository _dataFixRepository;
+    private readonly ILogger _logger;
 
     // ReSharper disable once ConvertToPrimaryConstructor
     public DataFixer(ILogger logger, IDataFixRepository dataFixRepository)
@@ -18,5 +18,4 @@ internal sealed class DataFixer
     {
         return true;
     }
-
 }
