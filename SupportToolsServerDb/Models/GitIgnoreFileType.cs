@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SupportToolsServerDb.Models;
@@ -5,6 +6,7 @@ namespace SupportToolsServerDb.Models;
 public sealed class GitIgnoreFileType
 {
     public int Id { get; set; }
+    public Guid RowId { get; set; }
     public required string Name { get; set; }
     public required string Content { get; set; }
 
