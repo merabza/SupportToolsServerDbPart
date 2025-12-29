@@ -5,12 +5,13 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using WebInstallers;
+using SupportToolsServer.Persistence;
+//using WebInstallers;
 
 namespace SupportToolsServerDb.Installers;
 
 // ReSharper disable once UnusedType.Global
-public sealed class SupportToolsServerDatabaseInstaller : IInstaller
+public sealed class SupportToolsServerDatabaseInstaller// : IInstaller
 {
     public int InstallPriority => 30;
     public int ServiceUsePriority => 30;

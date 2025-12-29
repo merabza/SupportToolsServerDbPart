@@ -3,7 +3,7 @@
 using System;
 using DatabaseToolsShared;
 using Microsoft.Extensions.Logging;
-using SupportToolsServerDb;
+using SupportToolsServer.Persistence;
 using SupportToolsServerDb.Models;
 
 namespace SupportToolsServerDbDataSeeding;

@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Persistence\SupportToolsServer.Persistence.csproj" />
     <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
-    <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
   </ItemGroup>
 
 </Project>

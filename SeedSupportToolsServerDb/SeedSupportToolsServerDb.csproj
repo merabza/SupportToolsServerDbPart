@@ -16,7 +16,6 @@
     <ProjectReference Include="..\..\ParametersManagement\LibDatabaseParameters\LibDatabaseParameters.csproj" />
     <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
     <ProjectReference Include="..\SupportToolsServerDbNewDataSeeding\SupportToolsServerDbNewDataSeeding.csproj" />
-    <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
   </ItemGroup>
 
 </Project>
