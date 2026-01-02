@@ -3,7 +3,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
         <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Persistence\SupportToolsServer.Persistence.csproj" />
-        <ProjectReference Include="..\..\WebSystemTools\WebInstallers\WebInstallers.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
