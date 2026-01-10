@@ -1,5 +1,6 @@
 using System;
 using CliParameters;
+using DomainShared.Repositories;
 using LibDatabaseParameters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,6 @@ try
     }
 
     var par = (SeederParameters?)argParser.Par;
-
     if (par is null)
     {
         StShared.WriteErrorLine("CreateProjectSeederCodeParameters is null", true);
@@ -39,7 +39,6 @@ try
     var servicesCreator = new SeedDbServicesCreator(par.LogFolder, null, "SeedGrammarGeDb", par.ConnectionStringSeed);
     // ReSharper disable once using
     var serviceProvider = servicesCreator.CreateServiceProvider(LogEventLevel.Information);
-
     if (serviceProvider is null)
     {
         StShared.WriteErrorLine("serviceProvider does not created", true);
@@ -47,7 +46,6 @@ try
     }
 
     logger = serviceProvider.GetService<ILogger<Program>>();
-
     if (logger is null)
     {
         StShared.WriteErrorLine("logger is null", true);
@@ -55,15 +53,20 @@ try
     }
 
     var stsDataSeederRepository = serviceProvider.GetService<IStsDataSeederRepository>();
-
     if (stsDataSeederRepository is null)
     {
         StShared.WriteErrorLine("stsDataSeederRepository is null", true);
         return 9;
     }
 
-    var dataFixRepository = serviceProvider.GetService<IDataFixRepository>();
+    var unitOfWork = serviceProvider.GetService<IUnitOfWork>();
+    if (unitOfWork is null)
+    {
+        StShared.WriteErrorLine("unitOfWork is null", true);
+        return 9;
+    }
 
+    var dataFixRepository = serviceProvider.GetService<IDataFixRepository>();
     if (dataFixRepository is null)
     {
         StShared.WriteErrorLine("dataFixRepository is null", true);
@@ -83,7 +86,7 @@ try
     }
 
     var seeder = new ProjectNewDataSeeder(logger,
-        new StsNewDataSeedersFactory(par.SecretDataFolder, stsDataSeederRepository), dataFixRepository);
+        new StsNewDataSeedersFactory(par.SecretDataFolder, stsDataSeederRepository, unitOfWork), dataFixRepository);
 
     return seeder.SeedData() ? 0 : 1;
 }
