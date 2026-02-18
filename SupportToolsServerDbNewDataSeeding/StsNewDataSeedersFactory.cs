@@ -1,5 +1,5 @@
-﻿using DomainShared.Repositories;
-using SupportToolsServerDbDataSeeding;
+﻿using SupportToolsServerDbDataSeeding;
+using SystemTools.DomainShared.Repositories;
 
 namespace SupportToolsServerDbNewDataSeeding;
 

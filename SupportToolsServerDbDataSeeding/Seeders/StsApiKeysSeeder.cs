@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DatabaseToolsShared;
-using DomainShared.Repositories;
 using SupportToolsServerDb.Models;
 using SupportToolsServerDbDataSeeding.Models;
+using SystemTools.DatabaseToolsShared;
+using SystemTools.DomainShared.Repositories;
 
 namespace SupportToolsServerDbDataSeeding.Seeders;
 

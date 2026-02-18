@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SupportToolsServer.Persistence;
 using SupportToolsServerDbDataSeeding;
 using SupportToolsServerDbNewDataSeeding;
-using SystemToolsShared;
+using SystemTools.SystemToolsShared;
 
 namespace SeedSupportToolsServerDb;
 

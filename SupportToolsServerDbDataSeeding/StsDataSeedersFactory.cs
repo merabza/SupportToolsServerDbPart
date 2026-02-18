@@ -1,6 +1,6 @@
-﻿using DatabaseToolsShared;
-using DomainShared.Repositories;
-using SupportToolsServerDbDataSeeding.Seeders;
+﻿using SupportToolsServerDbDataSeeding.Seeders;
+using SystemTools.DatabaseToolsShared;
+using SystemTools.DomainShared.Repositories;
 
 namespace SupportToolsServerDbDataSeeding;
 

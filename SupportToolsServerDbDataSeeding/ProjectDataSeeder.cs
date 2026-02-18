@@ -1,13 +1,13 @@
 ﻿using System;
-using DatabaseToolsShared;
 using Microsoft.Extensions.Logging;
+using SystemTools.DatabaseToolsShared;
 
 namespace SupportToolsServerDbDataSeeding;
 
 public /*open*/ class ProjectDataSeeder : DataSeederBase
 {
-    protected readonly ILogger Logger;
     private readonly StsDataSeedersFactory _dataSeedersFactory;
+    protected readonly ILogger Logger;
 
     protected ProjectDataSeeder(ILogger logger, StsDataSeedersFactory dataSeedersFactory) : base(false)
     {

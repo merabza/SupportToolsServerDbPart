@@ -1,7 +1,7 @@
-using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using SupportToolsServer.Persistence;
 
 namespace SupportToolsServerDb.DependencyInjection;
@@ -9,22 +9,22 @@ namespace SupportToolsServerDb.DependencyInjection;
 // ReSharper disable once UnusedType.Global
 public static class SupportToolsServerDbDependencyInjection
 {
-    public static IServiceCollection AddSupportToolsServerDb(this IServiceCollection services,
-        IConfiguration configuration, bool debugMode)
+    public static IServiceCollection AddSupportToolsServerDb(this IServiceCollection services, ILogger? debugLogger,
+        IConfiguration configuration)
     {
-        if (debugMode) Console.WriteLine($"{nameof(AddSupportToolsServerDb)} Started");
+        debugLogger?.Information("{MethodName} Started", nameof(AddSupportToolsServerDb));
 
         const string connectionStringConfigKey = "Data:SupportToolsServerDatabase:ConnectionString";
         var connectionString = configuration[connectionStringConfigKey];
 
-        if (string.IsNullOrWhiteSpace(connectionString) && !debugMode)
+        if (string.IsNullOrWhiteSpace(connectionString) && debugLogger is not null)
         {
-            Console.WriteLine($"parameter {connectionStringConfigKey} is empty");
+            debugLogger.Error("Parameter {ConnectionStringConfigKey} is empty", connectionStringConfigKey);
             return services;
         }
 
         services.AddDbContext<SupportToolsServerDbContext>(options => options.UseSqlServer(connectionString));
-        if (debugMode) Console.WriteLine($"{nameof(AddSupportToolsServerDb)} Finished");
+        debugLogger?.Information("{MethodName} Finished", nameof(AddSupportToolsServerDb));
 
         return services;
     }
