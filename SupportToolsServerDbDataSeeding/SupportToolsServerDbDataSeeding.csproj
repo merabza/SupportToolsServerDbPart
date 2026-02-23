@@ -1,19 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
+    <ItemGroup>
     <ProjectReference Include="..\..\SystemTools\DatabaseToolsShared\DatabaseToolsShared.csproj" />
     <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Json\" />
-    <Folder Include="Seeders\" />
   </ItemGroup>
 
 </Project>

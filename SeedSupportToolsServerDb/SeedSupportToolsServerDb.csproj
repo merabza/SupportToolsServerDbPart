@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
-    <ProjectReference Include="..\SupportToolsServerDbNewDataSeeding\SupportToolsServerDbNewDataSeeding.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
+        <ProjectReference Include="..\SupportToolsServerDbNewDataSeeding\SupportToolsServerDbNewDataSeeding.csproj" />
+    </ItemGroup>
 
 </Project>
