@@ -7,7 +7,6 @@
 
     <ItemGroup>
     <ProjectReference Include="..\..\SystemTools\DatabaseToolsShared\DatabaseToolsShared.csproj" />
-    <ProjectReference Include="..\..\SystemTools\SystemTools.Domain.Abstractions\SystemTools.Domain.Abstractions.csproj" />
     <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
   </ItemGroup>
 
