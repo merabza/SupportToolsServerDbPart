@@ -3,7 +3,7 @@ using System.Linq;
 using SupportToolsServerDb.Models;
 using SupportToolsServerDbDataSeeding.Models;
 using SystemTools.DatabaseToolsShared;
-using SystemTools.DomainShared.Repositories;
+using SystemTools.SystemToolsShared;
 
 namespace SupportToolsServerDbDataSeeding.Seeders;
 
@@ -12,8 +12,9 @@ public sealed class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKe
     private readonly string _secretDataFolder;
 
     // ReSharper disable once ConvertToPrimaryConstructor
-    public StsApiKeysSeeder(string secretDataFolder, IStsDataSeederRepository repo, IUnitOfWork unitOfWork) : base(
-        secretDataFolder, repo, unitOfWork, ESeedDataType.OnlyRules)
+    public StsApiKeysSeeder(string secretDataFolder, IStsDataSeederRepository repo,
+        IDatabaseAbstraction databaseAbstraction) : base(secretDataFolder, repo, databaseAbstraction,
+        ESeedDataType.OnlyRules)
     {
         _secretDataFolder = secretDataFolder;
         //Repo = repo;

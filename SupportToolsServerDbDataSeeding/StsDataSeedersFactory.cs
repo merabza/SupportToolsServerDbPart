@@ -1,25 +1,26 @@
 ﻿using SupportToolsServerDbDataSeeding.Seeders;
 using SystemTools.DatabaseToolsShared;
-using SystemTools.DomainShared.Repositories;
+using SystemTools.SystemToolsShared;
 
 namespace SupportToolsServerDbDataSeeding;
 
 public /*open*/ class StsDataSeedersFactory
 {
+    protected readonly IDatabaseAbstraction DatabaseAbstraction;
     protected readonly string SecretDataFolder;
 
-    protected StsDataSeedersFactory(string secretDataFolder, IStsDataSeederRepository repo, IUnitOfWork unitOfWork)
+    protected StsDataSeedersFactory(string secretDataFolder, IStsDataSeederRepository repo,
+        IDatabaseAbstraction databaseAbstraction)
     {
         SecretDataFolder = secretDataFolder;
         Repo = repo;
-        UnitOfWork = unitOfWork;
+        DatabaseAbstraction = databaseAbstraction;
     }
 
     protected IStsDataSeederRepository Repo { get; }
-    protected IUnitOfWork UnitOfWork { get; }
 
     public ITableDataSeeder CreateApiKeysSeeder()
     {
-        return new StsApiKeysSeeder(SecretDataFolder, Repo, UnitOfWork);
+        return new StsApiKeysSeeder(SecretDataFolder, Repo, DatabaseAbstraction);
     }
 }
