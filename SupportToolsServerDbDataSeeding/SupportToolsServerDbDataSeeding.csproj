@@ -6,7 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-    <ProjectReference Include="..\..\SystemTools\DatabaseToolsShared\DatabaseToolsShared.csproj" />
     <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
   </ItemGroup>
 
