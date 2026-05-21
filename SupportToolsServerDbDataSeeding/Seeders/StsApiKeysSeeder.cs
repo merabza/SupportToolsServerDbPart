@@ -14,7 +14,7 @@ public sealed class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKe
     // ReSharper disable once ConvertToPrimaryConstructor
     public StsApiKeysSeeder(string secretDataFolder, IStsDataSeederRepository repo,
         IDatabaseAbstraction databaseAbstraction) : base(secretDataFolder, repo, databaseAbstraction,
-        ESeedDataType.OnlyRules)
+        ESeedDataType.OnlySeederRules)
     {
         _secretDataFolder = secretDataFolder;
         //Repo = repo;
