@@ -2,10 +2,19 @@
 
 <Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
+<<<<<<< HEAD
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
         <PackageReference Include="Serilog" />
+=======
+        <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Persistence\SupportToolsServer.Persistence.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+>>>>>>> 2ca58175caa6b97a365d8bb4c07eb43921a106f8
     </ItemGroup>
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>

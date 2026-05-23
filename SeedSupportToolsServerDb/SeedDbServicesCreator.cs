@@ -1,31 +1,31 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using SupportToolsServer.Persistence;
-using SupportToolsServerDbDataSeeding;
-using SupportToolsServerDbNewDataSeeding;
-using SystemTools.SystemToolsShared;
+//using Microsoft.EntityFrameworkCore;
+//using Microsoft.Extensions.DependencyInjection;
+//using SupportToolsServer.Persistence;
+//using SupportToolsServerDbDataSeeding;
+//using SupportToolsServerDbNewDataSeeding;
+//using SystemTools.SystemToolsShared;
 
-namespace SeedSupportToolsServerDb;
+//namespace SeedSupportToolsServerDb;
 
-public sealed class SeedDbServicesCreator : ServicesCreator
-{
-    private readonly string _connectionString;
+//public sealed class SeedDbServicesCreator : ServicesCreator
+//{
+//    private readonly string _connectionString;
 
-    // ReSharper disable once ConvertToPrimaryConstructor
-    public SeedDbServicesCreator(string? logFolder, string? logFileName, string appName, string connectionString) :
-        base(logFolder, logFileName, appName)
-    {
-        _connectionString = connectionString;
-    }
+//    // ReSharper disable once ConvertToPrimaryConstructor
+//    public SeedDbServicesCreator(string? logFolder, string? logFileName, string appName, string connectionString) :
+//        base(logFolder, logFileName, appName)
+//    {
+//        _connectionString = connectionString;
+//    }
 
-    protected override void ConfigureServices(IServiceCollection services)
-    {
-        base.ConfigureServices(services);
+//    protected override void ConfigureServices(IServiceCollection services)
+//    {
+//        base.ConfigureServices(services);
 
-        services.AddScoped<IStsDataSeederRepository, StsDataSeederRepository>();
+//        services.AddScoped<IStsDataSeederRepository, StsDataSeederRepository>();
 
-        services.AddScoped<IDataFixRepository, DataFixRepository>();
+//        services.AddScoped<IDataFixRepository, DataFixRepository>();
 
-        services.AddDbContext<SupportToolsServerDbContext>(options => options.UseSqlServer(_connectionString));
-    }
-}
+//        services.AddDbContext<SupportToolsServerDbContext>(options => options.UseSqlServer(_connectionString));
+//    }
+//}
