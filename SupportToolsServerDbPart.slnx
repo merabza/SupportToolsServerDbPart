@@ -1,0 +1,12 @@
+<Solution>
+    <Folder Name="/Solution Items/">
+        <File Path=".editorconfig" />
+        <File Path="Directory.Build.props" />
+        <File Path="Directory.Packages.props" />
+    </Folder>
+    <Project Path="SeedSupportToolsServerDb/SeedSupportToolsServerDb.csproj" />
+    <Project Path="SupportToolsServerDb/SupportToolsServerDb.csproj" />
+    <Project Path="SupportToolsServerDbDataSeeding/SupportToolsServerDbDataSeeding.csproj" />
+    <Project Path="SupportToolsServerDbNewDataSeeding/SupportToolsServerDbNewDataSeeding.csproj" />
+    <Project Path="SupportToolsServerDbPart/SupportToolsServerDbPart.csproj" />
+</Solution>
