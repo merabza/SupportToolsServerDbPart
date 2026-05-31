@@ -5,18 +5,5 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-<<<<<<< HEAD
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
-=======
-    <ItemGroup>
->>>>>>> 2ca58175caa6b97a365d8bb4c07eb43921a106f8
-    <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
-  </ItemGroup>
 
 </Project>

@@ -5,30 +5,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-<<<<<<< HEAD
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>disable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
-    </ItemGroup>
-
-=======
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Persistence\SupportToolsServer.Persistence.csproj" />
-        <ProjectReference Include="..\SupportToolsServerDbDataSeeding\SupportToolsServerDbDataSeeding.csproj" />
-    </ItemGroup>
-
->>>>>>> 2ca58175caa6b97a365d8bb4c07eb43921a106f8
 </Project>
