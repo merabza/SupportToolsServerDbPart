@@ -4,6 +4,10 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\SystemTools\SystemTools.DatabaseToolsShared\SystemTools.DatabaseToolsShared.csproj" />
+      <ProjectReference Include="..\SupportToolsServerDb\SupportToolsServerDb.csproj" />
+    </ItemGroup>
 
 
 </Project>

@@ -35,8 +35,10 @@ public sealed class StsApiKeysSeeder : DataSeeder<ApiKeyByRemoteIpAddress, ApiKe
                     sd.ApiKey == apiKeyModel.ApiKey && sd.RemoteIpAddress == apiKeyModel.RemoteIpAddress)
         }).Where(w => w.existingApiKeyByIpAddress == null).Select(s => s.apiKeyModel).ToList();
 
-        return DataSeederRepo.CreateEntities(userToCreate.Select(x =>
-            new ApiKeyByRemoteIpAddress { ApiKey = x.ApiKey, RemoteIpAddress = x.RemoteIpAddress }).ToList());
+        return DataSeederRepo.CreateEntities([
+            .. userToCreate.Select(x =>
+                new ApiKeyByRemoteIpAddress { ApiKey = x.ApiKey, RemoteIpAddress = x.RemoteIpAddress })
+        ]);
     }
 
     //private bool CreateApiKey(ApiKeyModel apiKeyModel)

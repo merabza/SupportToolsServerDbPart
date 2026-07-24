@@ -28,7 +28,9 @@ public /*open*/ class ProjectDataSeeder : DataSeederBase
 
         //1 ActantGrammarCases
         if (!Use(_dataSeedersFactory.CreateApiKeysSeeder()))
+        {
             return false;
+        }
 
         Console.WriteLine("DataSeederCreator.Run Finished");
         return true;

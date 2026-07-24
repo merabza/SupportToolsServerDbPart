@@ -17,7 +17,9 @@ public sealed class ProjectNewDataSeeder : ProjectDataSeeder
     public override bool SeedData()
     {
         if (!base.SeedData())
+        {
             return false;
+        }
 
         Logger.LogInformation("Seed Sts Project New Data Seeder Started");
 
