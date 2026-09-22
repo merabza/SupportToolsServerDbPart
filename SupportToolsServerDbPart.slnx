@@ -4,9 +4,20 @@
         <File Path="Directory.Build.props" />
         <File Path="Directory.Packages.props" />
     </Folder>
-    <Project Path="SeedSupportToolsServerDb/SeedSupportToolsServerDb.csproj" />
-    <Project Path="SupportToolsServerDb/SupportToolsServerDb.csproj" />
-    <Project Path="SupportToolsServerDbDataSeeding/SupportToolsServerDbDataSeeding.csproj" />
-    <Project Path="SupportToolsServerDbNewDataSeeding/SupportToolsServerDbNewDataSeeding.csproj" />
-    <Project Path="SupportToolsServerDbPart/SupportToolsServerDbPart.csproj" />
+    <Folder Name="/SupportToolsServer/">
+        <Project Path="../SupportToolsServer/SupportToolsServer.Application/SupportToolsServer.Application.csproj" />
+        <Project Path="../SupportToolsServer/SupportToolsServer.Domain/SupportToolsServer.Domain.csproj" />
+    </Folder>
+    <Folder Name="/SupportToolsServerShared/">
+        <Project Path="../SupportToolsServerShared/SupportToolsServerApiContracts/SupportToolsServerApiContracts.csproj" />
+    </Folder>
+    <Folder Name="/SystemTools/">
+        <Project Path="../SystemTools/SystemTools.ApiContracts/SystemTools.ApiContracts.csproj" />
+        <Project Path="../SystemTools/SystemTools.Application.Abstractions/SystemTools.Application.Abstractions.csproj" />
+        <Project Path="../SystemTools/SystemTools.DatabaseToolsShared/SystemTools.DatabaseToolsShared.csproj" />
+        <Project Path="../SystemTools/SystemTools.SharedKernel/SystemTools.SharedKernel.csproj" />
+        <Project Path="../SystemTools/SystemTools.StringMessagesApiContracts/SystemTools.StringMessagesApiContracts.csproj" />
+        <Project Path="../SystemTools/SystemTools.SystemToolsShared/SystemTools.SystemToolsShared.csproj" />
+    </Folder>
+    <Project Path="SupportToolsServerDbPart.Db/SupportToolsServerDbPart.Db.csproj" />
 </Solution>
