@@ -6,9 +6,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\SupportToolsServerCore\SupportToolsServerCore.Application.Abstraction\SupportToolsServerCore.Application.Abstraction.csproj" />
     <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Application\SupportToolsServer.Application.csproj" />
-    <ProjectReference Include="..\..\SupportToolsServer\SupportToolsServer.Domain\SupportToolsServer.Domain.csproj" />
     <ProjectReference Include="..\..\SystemTools\SystemTools.DatabaseToolsShared\SystemTools.DatabaseToolsShared.csproj" />
+    <ProjectReference Include="..\..\SystemTools\SystemTools.RepositoriesShared\SystemTools.RepositoriesShared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SupportToolsServer.Domain">
+      <HintPath>..\..\SupportToolsServer\SupportToolsServer.Domain\bin\Debug\net10.0\SupportToolsServer.Domain.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

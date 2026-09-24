@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using SupportToolsServer.Application.Data;
 using SupportToolsServer.Domain.GitIgnoreFileTypes;
+using SupportToolsServerCore.Application.Abstraction;
 using SystemTools.DatabaseToolsShared;
 
 namespace SupportToolsServerDbPart.Db;
