@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using SupportToolsServerCore.Application.Abstraction;
 using SystemTools.Domain.Abstractions;
 using SystemTools.SharedKernel;
 using SystemTools.SystemToolsShared;
@@ -41,10 +42,10 @@ public static class SupportToolsServerDatabaseExtension
         services.AddDbContext<SupportToolsServerDbContext>(options => options.UseSqlServer(connectionString));
 
         services.AddScoped<IDomainEventsDispatcher, DomainEventsDispatcher>();
-        services.AddScoped<IGanmartebaGeApplicationDbContext>(sp => sp.GetRequiredService<SupportToolsServerDbContext>());
+        services.AddScoped<ISupportToolsServerDbContext>(sp => sp.GetRequiredService<SupportToolsServerDbContext>());
 
-        services.AddScoped<IUnitOfWork, GanmartebaGeUnitOfWork>();
-        services.AddScoped<IDatabaseAbstraction, GanmartebaGeDatabaseAbstractionRepository>();
+        services.AddScoped<IUnitOfWork, SupportToolsServerUnitOfWork>();
+        //services.AddScoped<IDatabaseAbstraction, GanmartebaGeDatabaseAbstractionRepository>();
 
         debugLogger?.Information("{MethodName} Finished", nameof(AddGanmartebaGeDatabase));
 
