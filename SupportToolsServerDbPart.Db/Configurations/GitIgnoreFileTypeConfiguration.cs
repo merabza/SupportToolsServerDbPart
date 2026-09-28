@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SupportToolsServer.Domain.GitIgnoreFileTypes;
+using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 
 namespace SupportToolsServerDbPart.Db.Configurations;
 
@@ -15,7 +15,7 @@ public class GitIgnoreFileTypeConfiguration : IEntityTypeConfiguration<GitIgnore
         builder.Property(x => x.Id).HasConversion(gitIgnoreFileTypeId => gitIgnoreFileTypeId.Value,
             guidValue => new GitIgnoreFileTypeId(guidValue)).IsRequired();
 
-        builder.Property(e => e.Name).IsRequired().HasMaxLength(50);
-        builder.Property(e => e.Content).IsRequired().HasMaxLength(16384);
+        builder.Property(e => e.Name).IsRequired().HasMaxLength(GitIgnoreFileType.NameMaxLength);
+        builder.Property(e => e.Content).IsRequired().HasMaxLength(GitIgnoreFileType.ContentMaxLength);
     }
 }

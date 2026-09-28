@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using SupportToolsServer.Domain.GitIgnoreFileTypes;
-using SupportToolsServerCore.Application.Abstraction;
+using SupportToolsServerCore.Application.Abstractions;
+using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
+using SupportToolsServerCore.Domain.GitRepos;
 using SystemTools.DatabaseToolsShared;
 
 namespace SupportToolsServerDbPart.Db;
@@ -26,6 +27,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     //ბაზაში არსებული ცხრილები წარმოდგენილი DbSet-ების სახით
     //public DbSet<GitData> GitData => Set<GitData>();
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
+    public DbSet<GitRepo> GitRepos { get; set; }
     //public DbSet<ApiKeyByRemoteIpAddress> ApiKeysByRemoteIpAddresses => Set<ApiKeyByRemoteIpAddress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
