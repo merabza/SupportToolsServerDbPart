@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +12,7 @@ using SupportToolsServerCore.Application.Abstractions;
 using SupportToolsServerDbPart.Db;
 using SupportToolsServerDbPart.Db.DependencyInjection;
 using SystemTools.Domain.Abstractions;
+using SystemTools.SharedKernel;
 using Xunit;
 
 namespace SupportToolsServerDbPart.Tests.DependencyInjection;
@@ -113,6 +116,35 @@ public sealed class SupportToolsServerDatabaseDependencyInjectionTests
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         Assert.IsType<SupportToolsServerUnitOfWork>(unitOfWork);
+    }
+
+    [Fact]
+    public void AddSupportToolsServerDatabase_RegistersTheDomainEventsDispatcherAsScoped()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSupportToolsServerDatabase(null, CreateConfiguration(ConnectionString));
+
+        Assert.Contains(services,
+            d => d.ServiceType == typeof(IDomainEventsDispatcher) &&
+                 d.ImplementationType == typeof(DomainEventsDispatcher) && d.Lifetime == ServiceLifetime.Scoped);
+    }
+
+    [Fact]
+    public async Task AddSupportToolsServerDatabase_CreatesTheContextWithTheDispatcherOfTheScope()
+    {
+        var services = new ServiceCollection();
+        services.AddSupportToolsServerDatabase(null, CreateConfiguration(ConnectionString));
+        var dispatcher = new Mock<IDomainEventsDispatcher>();
+        services.AddScoped(_ => dispatcher.Object);
+        await using ServiceProvider provider = services.BuildServiceProvider();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<SupportToolsServerDbContext>();
+
+        await context.SaveChangesAsync(CancellationToken.None);
+
+        dispatcher.Verify(d => d.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

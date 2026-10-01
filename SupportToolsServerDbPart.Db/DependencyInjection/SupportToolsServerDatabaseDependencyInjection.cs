@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SupportToolsServerCore.Application.Abstractions;
 using SystemTools.Domain.Abstractions;
+using SystemTools.SharedKernel;
 
 namespace SupportToolsServerDbPart.Db.DependencyInjection;
 
@@ -38,6 +39,7 @@ public static class SupportToolsServerDatabaseDependencyInjection
 
         services.AddDbContext<SupportToolsServerDbContext>(options => options.UseSqlServer(connectionString));
 
+        services.AddScoped<IDomainEventsDispatcher, DomainEventsDispatcher>();
         services.AddScoped<ISupportToolsServerDbContext>(sp => sp.GetRequiredService<SupportToolsServerDbContext>());
         services.AddScoped<IUnitOfWork, SupportToolsServerUnitOfWork>();
 
