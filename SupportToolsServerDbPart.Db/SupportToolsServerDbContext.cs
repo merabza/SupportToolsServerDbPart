@@ -29,6 +29,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     //public DbSet<GitData> GitData => Set<GitData>();
     public DbSet<EditorConfigFileType> EditorConfigFileTypes { get; set; }
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
+
     public DbSet<GitRepo> GitRepos { get; set; }
     //public DbSet<ApiKeyByRemoteIpAddress> ApiKeysByRemoteIpAddresses => Set<ApiKeyByRemoteIpAddress>();
 
