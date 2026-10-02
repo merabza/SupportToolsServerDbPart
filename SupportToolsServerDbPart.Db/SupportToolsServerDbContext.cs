@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SupportToolsServerCore.Application.Abstractions;
+using SupportToolsServerCore.Domain.DeploymentEnvironments;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
@@ -38,6 +39,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     //ბაზაში არსებული ცხრილები წარმოდგენილი DbSet-ების სახით
     //public DbSet<GitData> GitData => Set<GitData>();
     public DbSet<EditorConfigFileType> EditorConfigFileTypes { get; set; }
+    public DbSet<DeploymentEnvironment> Environments { get; set; }
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
 
     public DbSet<GitRepo> GitRepos { get; set; }

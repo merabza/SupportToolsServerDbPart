@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -5,9 +6,11 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Moq;
+using SupportToolsServerCore.Domain.DeploymentEnvironments;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
+using SupportToolsServerCore.Domain.Primitives;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
 using Xunit;
@@ -50,7 +53,7 @@ public sealed class SupportToolsServerDbContextTests
         await using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
         GitRepo added = NewGitRepo("RepoA");
         var updated = new GitRepo(GitRepoId.CreateUnique(), "RepoB", "addressB", "RepoB",
-            GitIgnoreFileTypeId.CreateUnique());
+            GitIgnoreFileTypeId.CreateUnique(), 1);
         updated.Update("RepoB", "addressB2", "RepoB2", updated.GitIgnoreFileTypeId);
         context.Attach(added);
         context.Attach(updated);
@@ -109,10 +112,56 @@ public sealed class SupportToolsServerDbContextTests
 
         Assert.NotNull(context.Model.FindEntityType(typeof(EditorConfigFileType)));
         Assert.NotNull(context.Model.FindEntityType(typeof(GitIgnoreFileType)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(DeploymentEnvironment)));
         IEntityType gitRepo = Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
         Assert.Contains(gitRepo.GetIndexes(), i => i.IsUnique && i.Properties.Single().Name == nameof(GitRepo.Name));
+    }
+
+    //The repositories rely on it: the Version of every registry aggregate root is the concurrency token of its table,
+    //and the first version is the default that the existing rows get when the column is added
+    [Fact]
+    public void Model_MakesTheVersionOfEveryVersionedEntityAConcurrencyTokenWithTheFirstVersionAsDefault()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        List<IEntityType> versionedEntityTypes =
+            [.. context.Model.GetEntityTypes().Where(x => IsVersionedEntity(x.ClrType))];
+
+        Assert.Superset(
+            new HashSet<Type>
+            {
+                typeof(DeploymentEnvironment), typeof(EditorConfigFileType), typeof(GitIgnoreFileType), typeof(GitRepo)
+            }, versionedEntityTypes.Select(x => x.ClrType).ToHashSet());
+        Assert.All(versionedEntityTypes, entityType =>
+        {
+            IProperty version = Assert.IsType<IProperty>(entityType.FindProperty(nameof(GitRepo.Version)),
+                exactMatch: false);
+            Assert.True(version.IsConcurrencyToken);
+            Assert.False(version.IsNullable);
+            Assert.Equal(EntityVersion.Initial, version.GetDefaultValue());
+        });
+    }
+
+    [Fact]
+    public void Model_MapsDeploymentEnvironmentToTheEnvironmentsTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType environment = Assert.IsType<IEntityType>(
+            context.Model.FindEntityType(typeof(DeploymentEnvironment)), exactMatch: false);
+
+        Assert.Equal("Environments", environment.GetTableName());
+        Assert.Contains(environment.GetIndexes(),
+            i => i.IsUnique && i.Properties.Single().Name == nameof(DeploymentEnvironment.Name));
+        IProperty name = environment.GetProperty(nameof(DeploymentEnvironment.Name));
+        Assert.False(name.IsNullable);
+        Assert.Equal(DeploymentEnvironment.NameMaxLength, name.GetMaxLength());
+        IProperty description = environment.GetProperty(nameof(DeploymentEnvironment.Description));
+        Assert.True(description.IsNullable);
+        Assert.Equal(DeploymentEnvironment.DescriptionMaxLength, description.GetMaxLength());
+        Assert.Null(environment.FindProperty(nameof(DeploymentEnvironment.DomainEvents)));
     }
 
     [Fact]
@@ -123,5 +172,19 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.GitRepos);
         Assert.NotNull(context.GitIgnoreFileTypes);
         Assert.NotNull(context.EditorConfigFileTypes);
+        Assert.NotNull(context.Environments);
+    }
+
+    private static bool IsVersionedEntity(Type type)
+    {
+        for (Type? current = type; current is not null; current = current.BaseType)
+        {
+            if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(VersionedEntity<>))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

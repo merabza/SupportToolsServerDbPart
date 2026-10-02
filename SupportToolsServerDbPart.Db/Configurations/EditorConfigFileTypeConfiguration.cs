@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
+using SupportToolsServerCore.Domain.Primitives;
 
 namespace SupportToolsServerDbPart.Db.Configurations;
 
@@ -17,5 +18,8 @@ public class EditorConfigFileTypeConfiguration : IEntityTypeConfiguration<Editor
 
         builder.Property(e => e.Name).IsRequired().HasMaxLength(EditorConfigFileType.NameMaxLength);
         builder.Property(e => e.Content).IsRequired().HasMaxLength(EditorConfigFileType.ContentMaxLength);
+
+        //optimistic concurrency-ის token-ი. DEFAULT სვეტის დამატებისას არსებულ ჩანაწერებს პირველ ვერსიას აძლევს
+        builder.Property(e => e.Version).IsConcurrencyToken().HasDefaultValue(EntityVersion.Initial);
     }
 }

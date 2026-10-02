@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
+using SupportToolsServerCore.Domain.Primitives;
 
 namespace SupportToolsServerDbPart.Db.Configurations;
 
@@ -22,6 +23,9 @@ public class GitRepoConfiguration : IEntityTypeConfiguration<GitRepo>
         builder.Property(x => x.Name).IsRequired().HasMaxLength(GitRepo.NameMaxLength);
         builder.Property(x => x.Address).IsRequired().HasMaxLength(GitRepo.AddressMaxLength);
         builder.Property(x => x.FolderName).IsRequired().HasMaxLength(GitRepo.FolderNameMaxLength);
+
+        //optimistic concurrency-ის token-ი. DEFAULT სვეტის დამატებისას არსებულ ჩანაწერებს პირველ ვერსიას აძლევს
+        builder.Property(x => x.Version).IsConcurrencyToken().HasDefaultValue(EntityVersion.Initial);
 
         builder.Property(x => x.GitIgnoreFileTypeId).HasConversion(gitIgnoreFileTypeId => gitIgnoreFileTypeId.Value,
             guidValue => new GitIgnoreFileTypeId(guidValue)).IsRequired();
