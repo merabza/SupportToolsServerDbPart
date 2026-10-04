@@ -7,10 +7,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Moq;
 using SupportToolsServerCore.Domain.DeploymentEnvironments;
+using SupportToolsServerCore.Domain.DotnetTools;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
+using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
+using SupportToolsServerCore.Domain.ReactAppTemplates;
+using SupportToolsServerCore.Domain.Runtimes;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
 using Xunit;
@@ -113,6 +117,10 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(EditorConfigFileType)));
         Assert.NotNull(context.Model.FindEntityType(typeof(GitIgnoreFileType)));
         Assert.NotNull(context.Model.FindEntityType(typeof(DeploymentEnvironment)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(Runtime)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(NpmPackage)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ReactAppTemplate)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(DotnetTool)));
         IEntityType gitRepo = Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -132,7 +140,14 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Superset(
             new HashSet<Type>
             {
-                typeof(DeploymentEnvironment), typeof(EditorConfigFileType), typeof(GitIgnoreFileType), typeof(GitRepo)
+                typeof(DeploymentEnvironment),
+                typeof(DotnetTool),
+                typeof(EditorConfigFileType),
+                typeof(GitIgnoreFileType),
+                typeof(GitRepo),
+                typeof(NpmPackage),
+                typeof(ReactAppTemplate),
+                typeof(Runtime)
             }, versionedEntityTypes.Select(x => x.ClrType).ToHashSet());
         Assert.All(versionedEntityTypes, entityType =>
         {
@@ -165,6 +180,69 @@ public sealed class SupportToolsServerDbContextTests
     }
 
     [Fact]
+    public void Model_MapsRuntimeToTheRuntimesTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType runtime = EntityTypeOf<Runtime>(context);
+
+        Assert.Equal("Runtimes", runtime.GetTableName());
+        AssertUniqueName(runtime);
+        AssertText(runtime, nameof(Runtime.Name), false, Runtime.NameMaxLength);
+        AssertText(runtime, nameof(Runtime.Description), true, Runtime.DescriptionMaxLength);
+        Assert.Null(runtime.FindProperty(nameof(Runtime.DomainEvents)));
+    }
+
+    [Fact]
+    public void Model_MapsNpmPackageToTheNpmPackagesTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType npmPackage = EntityTypeOf<NpmPackage>(context);
+
+        Assert.Equal("NpmPackages", npmPackage.GetTableName());
+        AssertUniqueName(npmPackage);
+        AssertText(npmPackage, nameof(NpmPackage.Name), false, NpmPackage.NameMaxLength);
+        AssertText(npmPackage, nameof(NpmPackage.Description), true, NpmPackage.DescriptionMaxLength);
+        Assert.Null(npmPackage.FindProperty(nameof(NpmPackage.DomainEvents)));
+    }
+
+    [Fact]
+    public void Model_MapsReactAppTemplateToTheReactAppTemplatesTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType reactAppTemplate = EntityTypeOf<ReactAppTemplate>(context);
+
+        Assert.Equal("ReactAppTemplates", reactAppTemplate.GetTableName());
+        AssertUniqueName(reactAppTemplate);
+        AssertText(reactAppTemplate, nameof(ReactAppTemplate.Name), false, ReactAppTemplate.NameMaxLength);
+        AssertText(reactAppTemplate, nameof(ReactAppTemplate.Template), false, ReactAppTemplate.TemplateMaxLength);
+        Assert.Null(reactAppTemplate.FindProperty(nameof(ReactAppTemplate.DomainEvents)));
+    }
+
+    //InstalledVersion, LatestVersion and CommandName belong to the machine, so they have no columns
+    [Fact]
+    public void Model_MapsDotnetToolToTheDotnetToolsTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType dotnetTool = EntityTypeOf<DotnetTool>(context);
+
+        Assert.Equal("DotnetTools", dotnetTool.GetTableName());
+        AssertUniqueName(dotnetTool);
+        AssertText(dotnetTool, nameof(DotnetTool.Name), false, DotnetTool.NameMaxLength);
+        AssertText(dotnetTool, nameof(DotnetTool.PackageId), false, DotnetTool.PackageIdMaxLength);
+        AssertText(dotnetTool, nameof(DotnetTool.MaxVersion), true, DotnetTool.MaxVersionMaxLength);
+        AssertText(dotnetTool, nameof(DotnetTool.Description), true, DotnetTool.DescriptionMaxLength);
+        Assert.Equal(
+            [
+                nameof(DotnetTool.Description), nameof(DotnetTool.Id), nameof(DotnetTool.MaxVersion),
+                nameof(DotnetTool.Name), nameof(DotnetTool.PackageId), nameof(DotnetTool.Version)
+            ], dotnetTool.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
     public void DbSets_ExposeTheTables()
     {
         using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
@@ -173,6 +251,27 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.GitIgnoreFileTypes);
         Assert.NotNull(context.EditorConfigFileTypes);
         Assert.NotNull(context.Environments);
+        Assert.NotNull(context.Runtimes);
+        Assert.NotNull(context.NpmPackages);
+        Assert.NotNull(context.ReactAppTemplates);
+        Assert.NotNull(context.DotnetTools);
+    }
+
+    private static IEntityType EntityTypeOf<TEntity>(SupportToolsServerDbContext context)
+    {
+        return Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(TEntity)), exactMatch: false);
+    }
+
+    private static void AssertUniqueName(IEntityType entityType)
+    {
+        Assert.Contains(entityType.GetIndexes(), i => i.IsUnique && i.Properties.Single().Name == "Name");
+    }
+
+    private static void AssertText(IEntityType entityType, string propertyName, bool isNullable, int maxLength)
+    {
+        IProperty property = entityType.GetProperty(propertyName);
+        Assert.Equal(isNullable, property.IsNullable);
+        Assert.Equal(maxLength, property.GetMaxLength());
     }
 
     private static bool IsVersionedEntity(Type type)
