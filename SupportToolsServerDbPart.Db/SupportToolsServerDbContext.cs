@@ -4,14 +4,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SupportToolsServerCore.Application.Abstractions;
+using SupportToolsServerCore.Domain.ApiClients;
+using SupportToolsServerCore.Domain.DatabaseServerConnections;
 using SupportToolsServerCore.Domain.DeploymentEnvironments;
 using SupportToolsServerCore.Domain.DotnetTools;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
+using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
+using SupportToolsServerCore.Domain.SmartSchemas;
 using SystemTools.DatabaseToolsShared;
 using SystemTools.SharedKernel;
 
@@ -42,9 +46,12 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
 
     //ბაზაში არსებული ცხრილები წარმოდგენილი DbSet-ების სახით
     //public DbSet<GitData> GitData => Set<GitData>();
+    public DbSet<ApiClient> ApiClients { get; set; }
+    public DbSet<DatabaseServerConnection> DatabaseServerConnections { get; set; }
     public DbSet<DotnetTool> DotnetTools { get; set; }
     public DbSet<EditorConfigFileType> EditorConfigFileTypes { get; set; }
     public DbSet<DeploymentEnvironment> Environments { get; set; }
+    public DbSet<FileStorage> FileStorages { get; set; }
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
 
     public DbSet<GitRepo> GitRepos { get; set; }
@@ -52,6 +59,8 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<ReactAppTemplate> ReactAppTemplates { get; set; }
 
     public DbSet<Runtime> Runtimes { get; set; }
+
+    public DbSet<SmartSchema> SmartSchemas { get; set; }
     //public DbSet<ApiKeyByRemoteIpAddress> ApiKeysByRemoteIpAddresses => Set<ApiKeyByRemoteIpAddress>();
 
     //დომენის მოვლენები შენახვის შემდეგ იგზავნება, ანუ ჰენდლერები უკვე შენახულ მონაცემებს ეხებიან

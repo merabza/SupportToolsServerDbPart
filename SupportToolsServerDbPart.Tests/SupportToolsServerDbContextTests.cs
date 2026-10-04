@@ -4,17 +4,22 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Moq;
+using SupportToolsServerCore.Domain.ApiClients;
+using SupportToolsServerCore.Domain.DatabaseServerConnections;
 using SupportToolsServerCore.Domain.DeploymentEnvironments;
 using SupportToolsServerCore.Domain.DotnetTools;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
+using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
+using SupportToolsServerCore.Domain.SmartSchemas;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
 using Xunit;
@@ -121,6 +126,12 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(NpmPackage)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ReactAppTemplate)));
         Assert.NotNull(context.Model.FindEntityType(typeof(DotnetTool)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(SmartSchema)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(SmartSchemaDetail)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(FileStorage)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ApiClient)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseServerConnection)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseFoldersSet)));
         IEntityType gitRepo = Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -140,14 +151,18 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Superset(
             new HashSet<Type>
             {
+                typeof(ApiClient),
+                typeof(DatabaseServerConnection),
                 typeof(DeploymentEnvironment),
                 typeof(DotnetTool),
                 typeof(EditorConfigFileType),
+                typeof(FileStorage),
                 typeof(GitIgnoreFileType),
                 typeof(GitRepo),
                 typeof(NpmPackage),
                 typeof(ReactAppTemplate),
-                typeof(Runtime)
+                typeof(Runtime),
+                typeof(SmartSchema)
             }, versionedEntityTypes.Select(x => x.ClrType).ToHashSet());
         Assert.All(versionedEntityTypes, entityType =>
         {
@@ -243,6 +258,157 @@ public sealed class SupportToolsServerDbContextTests
     }
 
     [Fact]
+    public void Model_MapsSmartSchemaToTheSmartSchemasTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType smartSchema = EntityTypeOf<SmartSchema>(context);
+
+        Assert.Equal("SmartSchemas", smartSchema.GetTableName());
+        AssertUniqueName(smartSchema);
+        AssertText(smartSchema, nameof(SmartSchema.Name), false, SmartSchema.NameMaxLength);
+        Assert.False(smartSchema.GetProperty(nameof(SmartSchema.LastPreserveCount)).IsNullable);
+        Assert.Equal(
+            [nameof(SmartSchema.Id), nameof(SmartSchema.LastPreserveCount), nameof(SmartSchema.Name),
+                nameof(SmartSchema.Version)],
+            smartSchema.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //The details are children of the aggregate: a required foreign key that cascades, so the replaced details of an
+    //update are deleted, and one detail of a period type per schema
+    [Fact]
+    public void Model_MapsSmartSchemaDetailToTheSmartSchemaDetailsTableAsAChildOfTheSchema()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType detail = EntityTypeOf<SmartSchemaDetail>(context);
+
+        Assert.Equal("SmartSchemaDetails", detail.GetTableName());
+        AssertText(detail, nameof(SmartSchemaDetail.PeriodType), false, SmartSchemaDetail.PeriodTypeMaxLength);
+        Assert.False(detail.GetProperty(nameof(SmartSchemaDetail.PreserveCount)).IsNullable);
+        AssertChildOf<SmartSchema>(detail, "SmartSchemaId", nameof(SmartSchema.Details));
+        Assert.Contains(detail.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name).SequenceEqual(["SmartSchemaId", "PeriodType"]));
+        Assert.Equal(["Id", "PeriodType", "PreserveCount", "SmartSchemaId"],
+            detail.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsFileStorageToTheFileStoragesTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType fileStorage = EntityTypeOf<FileStorage>(context);
+
+        Assert.Equal("FileStorages", fileStorage.GetTableName());
+        AssertUniqueName(fileStorage);
+        AssertText(fileStorage, nameof(FileStorage.Name), false, FileStorage.NameMaxLength);
+        AssertText(fileStorage, nameof(FileStorage.FileStoragePath), true, FileStorage.FileStoragePathMaxLength);
+        AssertText(fileStorage, nameof(FileStorage.UserName), true, FileStorage.UserNameMaxLength);
+        AssertText(fileStorage, nameof(FileStorage.Password), true, FileStorage.PasswordMaxLength);
+        Assert.Equal(
+            [
+                nameof(FileStorage.FileNameMaxLength), nameof(FileStorage.FileSizeSplitPositionInRow),
+                nameof(FileStorage.FileStoragePath), nameof(FileStorage.FtpSiteLsFileOffset), nameof(FileStorage.Id),
+                nameof(FileStorage.Name), nameof(FileStorage.Password), nameof(FileStorage.UserName),
+                nameof(FileStorage.Version)
+            ], fileStorage.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsApiClientToTheApiClientsTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType apiClient = EntityTypeOf<ApiClient>(context);
+
+        Assert.Equal("ApiClients", apiClient.GetTableName());
+        AssertUniqueName(apiClient);
+        AssertText(apiClient, nameof(ApiClient.Name), false, ApiClient.NameMaxLength);
+        AssertText(apiClient, nameof(ApiClient.Server), true, ApiClient.ServerMaxLength);
+        AssertText(apiClient, nameof(ApiClient.ApiKey), true, ApiClient.ApiKeyMaxLength);
+        Assert.Equal(
+            [
+                nameof(ApiClient.ApiKey), nameof(ApiClient.Id), nameof(ApiClient.Name), nameof(ApiClient.Server),
+                nameof(ApiClient.Version)
+            ], apiClient.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //The web agent is another aggregate: an optional foreign key that refuses to delete the ApiClient in use
+    [Fact]
+    public void Model_MapsDatabaseServerConnectionToItsTableWithAnOptionalRestrictedWebAgent()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType connection = EntityTypeOf<DatabaseServerConnection>(context);
+
+        Assert.Equal("DatabaseServerConnections", connection.GetTableName());
+        AssertUniqueName(connection);
+        AssertText(connection, nameof(DatabaseServerConnection.Name), false, DatabaseServerConnection.NameMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.DatabaseServerProvider), false,
+            DatabaseServerConnection.DatabaseServerProviderMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.RemoteDbConnectionName), true,
+            DatabaseServerConnection.RemoteDbConnectionNameMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.ServerAddress), true,
+            DatabaseServerConnection.ServerAddressMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.ServerUser), true,
+            DatabaseServerConnection.ServerUserMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.ServerPass), true,
+            DatabaseServerConnection.ServerPassMaxLength);
+        IForeignKey webAgent = Assert.Single(connection.GetForeignKeys());
+        Assert.Equal(typeof(ApiClient), webAgent.PrincipalEntityType.ClrType);
+        Assert.Equal(nameof(DatabaseServerConnection.DbWebAgentId), Assert.Single(webAgent.Properties).Name);
+        Assert.False(webAgent.IsRequired);
+        Assert.Equal(DeleteBehavior.Restrict, webAgent.DeleteBehavior);
+        Assert.Equal("uniqueidentifier", webAgent.Properties[0].GetColumnType());
+        Assert.Equal(
+            [
+                nameof(DatabaseServerConnection.ConnectionTimeOut),
+                nameof(DatabaseServerConnection.DatabaseServerProvider), nameof(DatabaseServerConnection.DbWebAgentId),
+                nameof(DatabaseServerConnection.Encrypt), nameof(DatabaseServerConnection.Id),
+                nameof(DatabaseServerConnection.Name), nameof(DatabaseServerConnection.RemoteDbConnectionName),
+                nameof(DatabaseServerConnection.ServerAddress), nameof(DatabaseServerConnection.ServerPass),
+                nameof(DatabaseServerConnection.ServerUser), nameof(DatabaseServerConnection.TrustServerCertificate),
+                nameof(DatabaseServerConnection.Version), nameof(DatabaseServerConnection.WindowsNtIntegratedSecurity)
+            ], connection.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsDatabaseFoldersSetToTheDatabaseFoldersSetsTableAsAChildOfTheConnection()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType foldersSet = EntityTypeOf<DatabaseFoldersSet>(context);
+
+        Assert.Equal("DatabaseFoldersSets", foldersSet.GetTableName());
+        AssertText(foldersSet, nameof(DatabaseFoldersSet.Name), false, DatabaseFoldersSet.NameMaxLength);
+        AssertText(foldersSet, nameof(DatabaseFoldersSet.Backup), true, DatabaseFoldersSet.FolderMaxLength);
+        AssertText(foldersSet, nameof(DatabaseFoldersSet.Data), true, DatabaseFoldersSet.FolderMaxLength);
+        AssertText(foldersSet, nameof(DatabaseFoldersSet.DataLog), true, DatabaseFoldersSet.FolderMaxLength);
+        AssertChildOf<DatabaseServerConnection>(foldersSet, "DatabaseServerConnectionId",
+            nameof(DatabaseServerConnection.DatabaseFoldersSets));
+        Assert.Contains(foldersSet.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name).SequenceEqual(["DatabaseServerConnectionId", "Name"]));
+        Assert.Equal(["Backup", "Data", "DataLog", "DatabaseServerConnectionId", "Id", "Name"],
+            foldersSet.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
+    //datetime instead of EF's datetime2. No entity of the model has such a column, so a test entity is added to it
+    [Fact]
+    public void Model_GivesADateTimeColumnTheTypeOfTheDefaultConvention()
+    {
+        DbContextOptions<SupportToolsServerDbContext> options =
+            new DbContextOptionsBuilder<SupportToolsServerDbContext>().UseSqlServer(ConnectionString)
+                .ReplaceService<IModelCustomizer, DateTimeEntityModelCustomizer>().Options;
+        using var context = new SupportToolsServerDbContext(options, _dispatcher.Object);
+
+        IEntityType dateTimeEntity = EntityTypeOf<DateTimeEntity>(context);
+
+        Assert.Equal("datetime", dateTimeEntity.GetProperty(nameof(DateTimeEntity.Moment)).GetColumnType());
+    }
+
+    [Fact]
     public void DbSets_ExposeTheTables()
     {
         using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
@@ -255,6 +421,26 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.NpmPackages);
         Assert.NotNull(context.ReactAppTemplates);
         Assert.NotNull(context.DotnetTools);
+        Assert.NotNull(context.SmartSchemas);
+        Assert.NotNull(context.FileStorages);
+        Assert.NotNull(context.ApiClients);
+        Assert.NotNull(context.DatabaseServerConnections);
+    }
+
+    //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
+    //cascade, and the root reaches the children through the collection navigation
+    private static void AssertChildOf<TRoot>(IEntityType child, string foreignKeyName, string navigationName)
+    {
+        IForeignKey foreignKey = Assert.Single(child.GetForeignKeys());
+        Assert.Equal(typeof(TRoot), foreignKey.PrincipalEntityType.ClrType);
+        IProperty property = Assert.Single(foreignKey.Properties);
+        Assert.Equal(foreignKeyName, property.Name);
+        Assert.True(property.IsShadowProperty());
+        Assert.False(property.IsNullable);
+        Assert.Equal("uniqueidentifier", property.GetColumnType());
+        Assert.True(foreignKey.IsRequired);
+        Assert.Equal(DeleteBehavior.Cascade, foreignKey.DeleteBehavior);
+        Assert.Equal(navigationName, foreignKey.PrincipalToDependent?.Name);
     }
 
     private static IEntityType EntityTypeOf<TEntity>(SupportToolsServerDbContext context)
@@ -285,5 +471,24 @@ public sealed class SupportToolsServerDbContextTests
         }
 
         return false;
+    }
+
+    private sealed class DateTimeEntity
+    {
+        public DateTime Moment { get; init; }
+    }
+
+    //Builds the model of the context and then adds the test entity, keyless because only its column matters
+    private sealed class DateTimeEntityModelCustomizer : RelationalModelCustomizer
+    {
+        public DateTimeEntityModelCustomizer(ModelCustomizerDependencies dependencies) : base(dependencies)
+        {
+        }
+
+        public override void Customize(ModelBuilder modelBuilder, DbContext context)
+        {
+            base.Customize(modelBuilder, context);
+            modelBuilder.Entity<DateTimeEntity>().HasNoKey();
+        }
     }
 }
