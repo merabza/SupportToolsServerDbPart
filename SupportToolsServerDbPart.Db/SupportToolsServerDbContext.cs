@@ -15,6 +15,7 @@ using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
+using SupportToolsServerCore.Domain.Servers;
 using SupportToolsServerCore.Domain.SmartSchemas;
 using SystemTools.DatabaseToolsShared;
 using SystemTools.SharedKernel;
@@ -59,6 +60,8 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<ReactAppTemplate> ReactAppTemplates { get; set; }
 
     public DbSet<Runtime> Runtimes { get; set; }
+
+    public DbSet<Server> Servers { get; set; }
 
     public DbSet<SmartSchema> SmartSchemas { get; set; }
     //public DbSet<ApiKeyByRemoteIpAddress> ApiKeysByRemoteIpAddresses => Set<ApiKeyByRemoteIpAddress>();

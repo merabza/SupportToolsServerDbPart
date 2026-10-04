@@ -19,6 +19,7 @@ using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
+using SupportToolsServerCore.Domain.Servers;
 using SupportToolsServerCore.Domain.SmartSchemas;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
@@ -132,6 +133,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(ApiClient)));
         Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseServerConnection)));
         Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseFoldersSet)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(Server)));
         IEntityType gitRepo = Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -162,6 +164,7 @@ public sealed class SupportToolsServerDbContextTests
                 typeof(NpmPackage),
                 typeof(ReactAppTemplate),
                 typeof(Runtime),
+                typeof(Server),
                 typeof(SmartSchema)
             }, versionedEntityTypes.Select(x => x.ClrType).ToHashSet());
         Assert.All(versionedEntityTypes, entityType =>
@@ -393,6 +396,44 @@ public sealed class SupportToolsServerDbContextTests
             foldersSet.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
+    //The web agents and the runtime are other aggregates: optional foreign keys that refuse to delete the records in
+    //use. IsLocal belongs to the machine, so it has no column
+    [Fact]
+    public void Model_MapsServerToTheServersTableWithOptionalRestrictedReferences()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType server = EntityTypeOf<Server>(context);
+
+        Assert.Equal("Servers", server.GetTableName());
+        AssertUniqueName(server);
+        AssertText(server, nameof(Server.Name), false, Server.NameMaxLength);
+        AssertText(server, nameof(Server.FilesUserName), true, Server.FilesUserNameMaxLength);
+        AssertText(server, nameof(Server.FilesUsersGroupName), true, Server.FilesUsersGroupNameMaxLength);
+        AssertText(server, nameof(Server.ServerSideDownloadFolder), true, Server.ServerSideDownloadFolderMaxLength);
+        AssertText(server, nameof(Server.ServerSideDeployFolder), true, Server.ServerSideDeployFolderMaxLength);
+        Assert.Equal(
+            [
+                (nameof(Server.RuntimeId), typeof(Runtime)), (nameof(Server.WebAgentId), typeof(ApiClient)),
+                (nameof(Server.WebAgentInstallerId), typeof(ApiClient))
+            ],
+            server.GetForeignKeys().Select(x => (Assert.Single(x.Properties).Name, x.PrincipalEntityType.ClrType))
+                .OrderBy(x => x.Name, StringComparer.Ordinal));
+        Assert.All(server.GetForeignKeys(), foreignKey =>
+        {
+            Assert.False(foreignKey.IsRequired);
+            Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
+            Assert.Equal("uniqueidentifier", foreignKey.Properties[0].GetColumnType());
+        });
+        Assert.Equal(
+            [
+                nameof(Server.FilesUserName), nameof(Server.FilesUsersGroupName), nameof(Server.Id),
+                nameof(Server.Name), nameof(Server.RuntimeId), nameof(Server.ServerSideDeployFolder),
+                nameof(Server.ServerSideDownloadFolder), nameof(Server.Version), nameof(Server.WebAgentId),
+                nameof(Server.WebAgentInstallerId)
+            ], server.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
     //datetime instead of EF's datetime2. No entity of the model has such a column, so a test entity is added to it
     [Fact]
@@ -425,6 +466,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.FileStorages);
         Assert.NotNull(context.ApiClients);
         Assert.NotNull(context.DatabaseServerConnections);
+        Assert.NotNull(context.Servers);
     }
 
     //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
