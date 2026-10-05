@@ -13,9 +13,11 @@ using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
+using SupportToolsServerCore.Domain.ProjectTemplates;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
 using SupportToolsServerCore.Domain.Servers;
+using SupportToolsServerCore.Domain.Settings;
 using SupportToolsServerCore.Domain.SmartSchemas;
 using SystemTools.DatabaseToolsShared;
 using SystemTools.SharedKernel;
@@ -56,7 +58,10 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
 
     public DbSet<GitRepo> GitRepos { get; set; }
+    public DbSet<GlobalSettings> GlobalSettings { get; set; }
     public DbSet<NpmPackage> NpmPackages { get; set; }
+    public DbSet<ProjectCreatorSettings> ProjectCreatorSettings { get; set; }
+    public DbSet<ProjectTemplate> ProjectTemplates { get; set; }
     public DbSet<ReactAppTemplate> ReactAppTemplates { get; set; }
 
     public DbSet<Runtime> Runtimes { get; set; }

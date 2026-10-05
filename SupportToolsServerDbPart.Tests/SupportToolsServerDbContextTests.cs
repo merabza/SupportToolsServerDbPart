@@ -17,9 +17,11 @@ using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
+using SupportToolsServerCore.Domain.ProjectTemplates;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
 using SupportToolsServerCore.Domain.Servers;
+using SupportToolsServerCore.Domain.Settings;
 using SupportToolsServerCore.Domain.SmartSchemas;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
@@ -134,7 +136,11 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseServerConnection)));
         Assert.NotNull(context.Model.FindEntityType(typeof(DatabaseFoldersSet)));
         Assert.NotNull(context.Model.FindEntityType(typeof(Server)));
-        IEntityType gitRepo = Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
+        Assert.NotNull(context.Model.FindEntityType(typeof(GlobalSettings)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(DatabasesBackupFilesExchange)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectCreatorSettings)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectTemplate)));
+        IEntityType gitRepo =Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
         Assert.Contains(gitRepo.GetIndexes(), i => i.IsUnique && i.Properties.Single().Name == nameof(GitRepo.Name));
@@ -161,7 +167,10 @@ public sealed class SupportToolsServerDbContextTests
                 typeof(FileStorage),
                 typeof(GitIgnoreFileType),
                 typeof(GitRepo),
+                typeof(GlobalSettings),
                 typeof(NpmPackage),
+                typeof(ProjectCreatorSettings),
+                typeof(ProjectTemplate),
                 typeof(ReactAppTemplate),
                 typeof(Runtime),
                 typeof(Server),
@@ -434,6 +443,153 @@ public sealed class SupportToolsServerDbContextTests
             ], server.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
+    //A singleton: the key is fixed and a check constraint refuses any other key. The exchange parameters are an owned
+    //type in the same row, required so that EF creates them even when all their columns are NULL. Every reference is
+    //an optional foreign key that refuses to delete the record in use
+    [Fact]
+    public void Model_MapsGlobalSettingsToASingletonRowWithTheExchangeParametersAndRestrictedReferences()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType globalSettings = EntityTypeOf<GlobalSettings>(context);
+
+        Assert.Equal("GlobalSettings", globalSettings.GetTableName());
+        AssertSingletonCheck<GlobalSettings>(context, "CK_GlobalSettings_Singleton");
+        AssertText(globalSettings, nameof(GlobalSettings.ServiceDescriptionSignature), true,
+            GlobalSettings.ServiceDescriptionSignatureMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.UploadTempExtension), true,
+            GlobalSettings.UploadTempExtensionMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.ProgramArchiveDateMask), true,
+            GlobalSettings.ProgramArchiveDateMaskMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.ProgramArchiveExtension), true,
+            GlobalSettings.ProgramArchiveExtensionMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.ParametersFileDateMask), true,
+            GlobalSettings.ParametersFileDateMaskMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.ParametersFileExtension), true,
+            GlobalSettings.ParametersFileExtensionMaxLength);
+        AssertText(globalSettings, nameof(GlobalSettings.MediatRLicenseKey), true,
+            GlobalSettings.MediatRLicenseKeyMaxLength);
+        AssertOptionalRestrictedReferences(globalSettings,
+        [
+            (nameof(GlobalSettings.FileStorageForExchangeId), typeof(FileStorage)),
+            (nameof(GlobalSettings.LocalPackageManagerWebApiClientId), typeof(ApiClient)),
+            (nameof(GlobalSettings.SmartSchemaForExchangeId), typeof(SmartSchema)),
+            (nameof(GlobalSettings.SmartSchemaForLocalId), typeof(SmartSchema))
+        ]);
+        Assert.Equal(
+            [
+                nameof(GlobalSettings.FileStorageForExchangeId), nameof(GlobalSettings.Id),
+                nameof(GlobalSettings.LocalPackageManagerWebApiClientId), nameof(GlobalSettings.MediatRLicenseKey),
+                nameof(GlobalSettings.ParametersFileDateMask), nameof(GlobalSettings.ParametersFileExtension),
+                nameof(GlobalSettings.ProgramArchiveDateMask), nameof(GlobalSettings.ProgramArchiveExtension),
+                nameof(GlobalSettings.ServiceDescriptionSignature), nameof(GlobalSettings.SmartSchemaForExchangeId),
+                nameof(GlobalSettings.SmartSchemaForLocalId), nameof(GlobalSettings.UploadTempExtension),
+                nameof(GlobalSettings.Version)
+            ], globalSettings.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+
+        INavigation exchangeNavigation =
+            globalSettings.GetNavigations().Single(x => x.Name == nameof(GlobalSettings.DatabasesBackupFilesExchange));
+        Assert.True(exchangeNavigation.ForeignKey.IsOwnership);
+        Assert.True(exchangeNavigation.ForeignKey.IsRequiredDependent);
+        IEntityType exchange = exchangeNavigation.TargetEntityType;
+        Assert.Equal(typeof(DatabasesBackupFilesExchange), exchange.ClrType);
+        Assert.Equal("GlobalSettings", exchange.GetTableName());
+        AssertText(exchange, nameof(DatabasesBackupFilesExchange.DownloadTempExtension), true,
+            DatabasesBackupFilesExchange.DownloadTempExtensionMaxLength);
+        AssertText(exchange, nameof(DatabasesBackupFilesExchange.UploadTempExtension), true,
+            DatabasesBackupFilesExchange.UploadTempExtensionMaxLength);
+        AssertOptionalRestrictedReferences(exchange,
+        [
+            (nameof(DatabasesBackupFilesExchange.ExchangeFileStorageId), typeof(FileStorage)),
+            (nameof(DatabasesBackupFilesExchange.ExchangeSmartSchemaId), typeof(SmartSchema)),
+            (nameof(DatabasesBackupFilesExchange.LocalSmartSchemaId), typeof(SmartSchema))
+        ]);
+        Assert.Equal(
+            [
+                "DatabasesBackupFilesExchange_DownloadTempExtension",
+                "DatabasesBackupFilesExchange_ExchangeFileStorageId",
+                "DatabasesBackupFilesExchange_ExchangeSmartSchemaId",
+                "DatabasesBackupFilesExchange_LocalSmartSchemaId", "DatabasesBackupFilesExchange_UploadTempExtension",
+                "Id"
+            ],
+            exchange.GetProperties().Select(x => x.GetColumnName(StoreObjectIdentifier.Table("GlobalSettings")))
+                .Order(StringComparer.Ordinal));
+    }
+
+    //A singleton with optional foreign keys that refuse to delete the records in use. The paths are canonical paths,
+    //stored as they come
+    [Fact]
+    public void Model_MapsProjectCreatorSettingsToASingletonRowWithRestrictedReferences()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType projectCreatorSettings = EntityTypeOf<ProjectCreatorSettings>(context);
+
+        Assert.Equal("ProjectCreatorSettings", projectCreatorSettings.GetTableName());
+        AssertSingletonCheck<ProjectCreatorSettings>(context, "CK_ProjectCreatorSettings_Singleton");
+        Assert.False(projectCreatorSettings.GetProperty(nameof(ProjectCreatorSettings.IndentSize)).IsNullable);
+        AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.FakeHostProjectName), true,
+            ProjectCreatorSettings.FakeHostProjectNameMaxLength);
+        AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.ProjectsFolderPathReal), true,
+            ProjectCreatorSettings.ProjectsFolderPathRealMaxLength);
+        AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.SecretsFolderPathReal), true,
+            ProjectCreatorSettings.SecretsFolderPathRealMaxLength);
+        AssertOptionalRestrictedReferences(projectCreatorSettings,
+        [
+            (nameof(ProjectCreatorSettings.DatabaseExchangeFileStorageId), typeof(FileStorage)),
+            (nameof(ProjectCreatorSettings.DeveloperDbConnectionId), typeof(DatabaseServerConnection)),
+            (nameof(ProjectCreatorSettings.ProductionEnvironmentId), typeof(DeploymentEnvironment)),
+            (nameof(ProjectCreatorSettings.ProductionServerId), typeof(Server)),
+            (nameof(ProjectCreatorSettings.UseSmartSchemaId), typeof(SmartSchema))
+        ]);
+        Assert.Equal(
+            [
+                nameof(ProjectCreatorSettings.DatabaseExchangeFileStorageId),
+                nameof(ProjectCreatorSettings.DeveloperDbConnectionId),
+                nameof(ProjectCreatorSettings.FakeHostProjectName), nameof(ProjectCreatorSettings.Id),
+                nameof(ProjectCreatorSettings.IndentSize), nameof(ProjectCreatorSettings.ProductionEnvironmentId),
+                nameof(ProjectCreatorSettings.ProductionServerId),
+                nameof(ProjectCreatorSettings.ProjectsFolderPathReal),
+                nameof(ProjectCreatorSettings.SecretsFolderPathReal), nameof(ProjectCreatorSettings.UseSmartSchemaId),
+                nameof(ProjectCreatorSettings.Version)
+            ], projectCreatorSettings.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //The React template is another aggregate: an optional foreign key that refuses to delete the template in use
+    [Fact]
+    public void Model_MapsProjectTemplateToTheProjectTemplatesTableWithAnOptionalRestrictedReactTemplate()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType projectTemplate = EntityTypeOf<ProjectTemplate>(context);
+
+        Assert.Equal("ProjectTemplates", projectTemplate.GetTableName());
+        AssertUniqueName(projectTemplate);
+        AssertText(projectTemplate, nameof(ProjectTemplate.Name), false, ProjectTemplate.NameMaxLength);
+        AssertText(projectTemplate, nameof(ProjectTemplate.SupportProjectType), false,
+            ProjectTemplate.SupportProjectTypeMaxLength);
+        AssertText(projectTemplate, nameof(ProjectTemplate.TestProjectName), true,
+            ProjectTemplate.TestProjectNameMaxLength);
+        AssertText(projectTemplate, nameof(ProjectTemplate.TestProjectShortName), true,
+            ProjectTemplate.TestProjectShortNameMaxLength);
+        AssertOptionalRestrictedReferences(projectTemplate,
+            [(nameof(ProjectTemplate.ReactTemplateId), typeof(ReactAppTemplate))]);
+        Assert.All(
+            projectTemplate.GetProperties().Where(x => x.ClrType == typeof(bool)),
+            flag => Assert.False(flag.IsNullable));
+        Assert.Equal(
+            [
+                nameof(ProjectTemplate.Id), nameof(ProjectTemplate.Name), nameof(ProjectTemplate.ReactTemplateId),
+                nameof(ProjectTemplate.SupportProjectType), nameof(ProjectTemplate.TestProjectName),
+                nameof(ProjectTemplate.TestProjectShortName), nameof(ProjectTemplate.UseCarcass),
+                nameof(ProjectTemplate.UseDatabase), nameof(ProjectTemplate.UseDbPartFolderForDatabaseProjects),
+                nameof(ProjectTemplate.UseFluentValidation), nameof(ProjectTemplate.UseHttps),
+                nameof(ProjectTemplate.UseIdentity), nameof(ProjectTemplate.UseMenu),
+                nameof(ProjectTemplate.UseReCounter), nameof(ProjectTemplate.UseReact),
+                nameof(ProjectTemplate.UseSignalR), nameof(ProjectTemplate.Version)
+            ], projectTemplate.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
     //datetime instead of EF's datetime2. No entity of the model has such a column, so a test entity is added to it
     [Fact]
@@ -467,6 +623,9 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.ApiClients);
         Assert.NotNull(context.DatabaseServerConnections);
         Assert.NotNull(context.Servers);
+        Assert.NotNull(context.GlobalSettings);
+        Assert.NotNull(context.ProjectCreatorSettings);
+        Assert.NotNull(context.ProjectTemplates);
     }
 
     //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
@@ -483,6 +642,34 @@ public sealed class SupportToolsServerDbContextTests
         Assert.True(foreignKey.IsRequired);
         Assert.Equal(DeleteBehavior.Cascade, foreignKey.DeleteBehavior);
         Assert.Equal(navigationName, foreignKey.PrincipalToDependent?.Name);
+    }
+
+    //Optional foreign keys stored as the Guid of the referenced id, which refuse to delete the records in use
+    private static void AssertOptionalRestrictedReferences(IEntityType entityType,
+        (string Name, Type ClrType)[] expected)
+    {
+        List<IForeignKey> references = [.. entityType.GetForeignKeys().Where(x => !x.IsOwnership)];
+        Assert.Equal(expected,
+            references.Select(x => (Assert.Single(x.Properties).Name, x.PrincipalEntityType.ClrType))
+                .OrderBy(x => x.Name, StringComparer.Ordinal));
+        Assert.All(references, foreignKey =>
+        {
+            Assert.False(foreignKey.IsRequired);
+            Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
+            Assert.Equal("uniqueidentifier", foreignKey.Properties[0].GetColumnType());
+        });
+    }
+
+    //The only row has the fixed key of the singleton, and the check constraint refuses any other key. Check constraints
+    //are kept only in the design-time model
+    private static void AssertSingletonCheck<TEntity>(SupportToolsServerDbContext context, string constraintName)
+    {
+        IEntityType entityType = Assert.IsType<IEntityType>(
+            context.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(TEntity)), exactMatch: false);
+        ICheckConstraint check = Assert.Single(entityType.GetCheckConstraints());
+        Assert.Equal(constraintName, check.Name);
+        Assert.Equal("[Id] = '00000000-0000-0000-0000-000000000001'", check.Sql);
+        Assert.Equal("uniqueidentifier", entityType.GetProperty("Id").GetColumnType());
     }
 
     private static IEntityType EntityTypeOf<TEntity>(SupportToolsServerDbContext context)
