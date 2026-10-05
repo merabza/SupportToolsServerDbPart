@@ -13,6 +13,7 @@ using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
+using SupportToolsServerCore.Domain.Projects;
 using SupportToolsServerCore.Domain.ProjectTemplates;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
@@ -61,6 +62,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<GlobalSettings> GlobalSettings { get; set; }
     public DbSet<NpmPackage> NpmPackages { get; set; }
     public DbSet<ProjectCreatorSettings> ProjectCreatorSettings { get; set; }
+    public DbSet<Project> Projects { get; set; }
     public DbSet<ProjectTemplate> ProjectTemplates { get; set; }
     public DbSet<ReactAppTemplate> ReactAppTemplates { get; set; }
 

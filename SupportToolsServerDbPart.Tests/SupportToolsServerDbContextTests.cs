@@ -17,6 +17,7 @@ using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
+using SupportToolsServerCore.Domain.Projects;
 using SupportToolsServerCore.Domain.ProjectTemplates;
 using SupportToolsServerCore.Domain.ReactAppTemplates;
 using SupportToolsServerCore.Domain.Runtimes;
@@ -140,6 +141,13 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(DatabasesBackupFilesExchange)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectCreatorSettings)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectTemplate)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(Project)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectGitRepo)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectNpmPackage)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectRedundantFile)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectAllowedTool)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectEndpoint)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ProjectRouteClass)));
         IEntityType gitRepo =Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -169,6 +177,7 @@ public sealed class SupportToolsServerDbContextTests
                 typeof(GitRepo),
                 typeof(GlobalSettings),
                 typeof(NpmPackage),
+                typeof(Project),
                 typeof(ProjectCreatorSettings),
                 typeof(ProjectTemplate),
                 typeof(ReactAppTemplate),
@@ -590,6 +599,219 @@ public sealed class SupportToolsServerDbContextTests
             ], projectTemplate.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
+    //The root of the Project aggregate. The .editorconfig template is another aggregate: an optional foreign key that
+    //refuses to delete the template in use. The paths are canonical paths, stored as they come
+    [Fact]
+    public void Model_MapsProjectToTheProjectsTableWithAnOptionalRestrictedEditorConfigTemplate()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType project = EntityTypeOf<Project>(context);
+
+        Assert.Equal("Projects", project.GetTableName());
+        AssertUniqueName(project);
+        AssertText(project, nameof(Project.Name), false, Project.NameMaxLength);
+        AssertText(project, nameof(Project.ProjectType), false, Project.ProjectTypeMaxLength);
+        AssertText(project, nameof(Project.ProjectGroupName), true, Project.ProjectGroupNameMaxLength);
+        AssertText(project, nameof(Project.ProjectDescription), true, Project.ProjectDescriptionMaxLength);
+        AssertText(project, nameof(Project.KeyGuidPart), true, Project.KeyGuidPartMaxLength);
+        Assert.All(
+            [
+                nameof(Project.MainProjectName), nameof(Project.ApiContractsProjectName), nameof(Project.SpaProjectName),
+                nameof(Project.DbContextName), nameof(Project.ProjectShortPrefix),
+                nameof(Project.ScaffoldSeederProjectName), nameof(Project.DbContextProjectName),
+                nameof(Project.NewDataSeedingClassLibProjectName)
+            ], name => AssertText(project, name, true, Project.CodeNameMaxLength));
+        Assert.All(
+            [
+                nameof(Project.ProgramArchiveDateMask), nameof(Project.ProgramArchiveExtension),
+                nameof(Project.ParametersFileDateMask), nameof(Project.ParametersFileExtension)
+            ], name => AssertText(project, name, true, Project.MaskMaxLength));
+        Assert.All(
+            [
+                nameof(Project.ProjectFolderName), nameof(Project.SolutionFileName),
+                nameof(Project.ProjectSecurityFolderPath), nameof(Project.MigrationStartupProjectFilePath),
+                nameof(Project.MigrationProjectFilePath), nameof(Project.DataSeederRulesByTableStartupProjectFilePath),
+                nameof(Project.OldDataConvertorForDataSeeder), nameof(Project.SeedProjectFilePath),
+                nameof(Project.SeedProjectParametersFilePath), nameof(Project.ExcludesRulesParametersFilePath),
+                nameof(Project.AppSetEnKeysJsonFileName), nameof(Project.MigrationSqlFilesFolder),
+                nameof(Project.PrepareProdCopyDatabaseProjectFilePath),
+                nameof(Project.PrepareProdCopyDatabaseProjectParametersFilePath),
+                nameof(Project.PairedDbObjectsResultFileName)
+            ], name => AssertText(project, name, true, Project.PathMaxLength));
+        Assert.All(
+            [nameof(Project.MajorVersion), nameof(Project.MinorVersion), nameof(Project.UseAlternativeWebAgent)],
+            name => Assert.False(project.GetProperty(name).IsNullable));
+        AssertOptionalRestrictedReferences(project,
+            [(nameof(Project.EditorConfigFileTypeId), typeof(EditorConfigFileType))]);
+        Assert.Equal(38, project.GetProperties().Count());
+    }
+
+    //Both database parameters are optional owned types in the same row, with the columns of the reusable
+    //configuration. Their required fields are stored in nullable columns, so EF can tell a missing part from an empty
+    //one, and every reference is an optional foreign key that refuses to delete the record in use
+    [Theory]
+    [InlineData(nameof(Project.DevDatabaseParameters))]
+    [InlineData(nameof(Project.ProdCopyDatabaseParameters))]
+    public void Model_MapsTheDatabaseParametersOfAProjectToOptionalOwnedColumnsWithRestrictedReferences(
+        string navigationName)
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+        var projectsTable = StoreObjectIdentifier.Table("Projects");
+
+        INavigation navigation = EntityTypeOf<Project>(context).GetNavigations().Single(x => x.Name == navigationName);
+
+        Assert.True(navigation.ForeignKey.IsOwnership);
+        Assert.False(navigation.ForeignKey.IsRequiredDependent);
+        IEntityType parameters = navigation.TargetEntityType;
+        Assert.Equal(typeof(DatabaseParameters), parameters.ClrType);
+        Assert.Equal("Projects", parameters.GetTableName());
+        AssertText(parameters, nameof(DatabaseParameters.DatabaseRecoveryModel), true,
+            DatabaseParameters.DatabaseRecoveryModelMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.DbServerFoldersSetName), true,
+            DatabaseFoldersSet.NameMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.DatabaseName), true, DatabaseParameters.DatabaseNameMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.BackupNamePrefix), true,
+            DatabaseParameters.BackupNamePrefixMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.DateMask), true, DatabaseParameters.DateMaskMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.BackupFileExtension), true,
+            DatabaseParameters.BackupFileExtensionMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.BackupNameMiddlePart), true,
+            DatabaseParameters.BackupNameMiddlePartMaxLength);
+        AssertText(parameters, nameof(DatabaseParameters.BackupType), true, DatabaseParameters.BackupTypeMaxLength);
+        Assert.All([nameof(DatabaseParameters.CommandTimeOut), nameof(DatabaseParameters.SkipBackupBeforeRestore)],
+            name =>
+            {
+                IProperty property = parameters.GetProperty(name);
+                Assert.False(property.IsNullable);
+                Assert.True(property.IsColumnNullable(projectsTable));
+            });
+        AssertOptionalRestrictedReferences(parameters,
+        [
+            (nameof(DatabaseParameters.DbConnectionId), typeof(DatabaseServerConnection)),
+            (nameof(DatabaseParameters.FileStorageId), typeof(FileStorage)),
+            (nameof(DatabaseParameters.SmartSchemaId), typeof(SmartSchema))
+        ]);
+        string[] fields =
+        [
+            "BackupFileExtension", "BackupNameMiddlePart", "BackupNamePrefix", "BackupType", "CommandTimeOut",
+            "Compress", "DatabaseName", "DatabaseRecoveryModel", "DateMask", "DbConnectionId",
+            "DbServerFoldersSetName", "FileStorageId", "SkipBackupBeforeRestore", "SmartSchemaId", "Verify"
+        ];
+        Assert.Equal(["Id", .. fields.Select(x => $"{navigationName}_{x}")],
+            parameters.GetProperties().Select(x => x.GetColumnName(projectsTable)).OrderBy(x => x != "Id")
+                .ThenBy(x => x, StringComparer.Ordinal));
+    }
+
+    //The children of the aggregate: a required foreign key that cascades, so the replaced children of an update are
+    //deleted. A git or npm package of another aggregate is a required foreign key that refuses to delete the record in
+    //use, and every child appears once in its project
+    [Fact]
+    public void Model_MapsProjectGitRepoToTheProjectGitReposTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType gitRepo = EntityTypeOf<ProjectGitRepo>(context);
+
+        Assert.Equal("ProjectGitRepos", gitRepo.GetTableName());
+        AssertChildOf<Project>(gitRepo, "ProjectId", nameof(Project.GitRepos));
+        AssertRequiredRestrictedReference<GitRepo>(gitRepo, nameof(ProjectGitRepo.GitRepoId));
+        IProperty kind = gitRepo.GetProperty(nameof(ProjectGitRepo.Kind));
+        Assert.False(kind.IsNullable);
+        Assert.Equal(ProjectGitRepo.KindMaxLength, kind.GetMaxLength());
+        Assert.Equal(typeof(string), kind.GetTypeMapping().Converter?.ProviderClrType);
+        AssertUniqueChildIndex(gitRepo, nameof(ProjectGitRepo.GitRepoId), nameof(ProjectGitRepo.Kind));
+        Assert.Equal(["GitRepoId", "Id", "Kind", "ProjectId"],
+            gitRepo.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsProjectNpmPackageToTheProjectNpmPackagesTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType npmPackage = EntityTypeOf<ProjectNpmPackage>(context);
+
+        Assert.Equal("ProjectNpmPackages", npmPackage.GetTableName());
+        AssertChildOf<Project>(npmPackage, "ProjectId", nameof(Project.NpmPackages));
+        AssertRequiredRestrictedReference<NpmPackage>(npmPackage, nameof(ProjectNpmPackage.NpmPackageId));
+        AssertUniqueChildIndex(npmPackage, nameof(ProjectNpmPackage.NpmPackageId));
+        Assert.Equal(["Id", "NpmPackageId", "ProjectId"],
+            npmPackage.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsProjectRedundantFileToTheProjectRedundantFilesTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType redundantFile = EntityTypeOf<ProjectRedundantFile>(context);
+
+        Assert.Equal("ProjectRedundantFiles", redundantFile.GetTableName());
+        AssertText(redundantFile, nameof(ProjectRedundantFile.FileName), false,
+            ProjectRedundantFile.FileNameMaxLength);
+        AssertChildOf<Project>(redundantFile, "ProjectId", nameof(Project.RedundantFiles));
+        AssertUniqueChildIndex(redundantFile, nameof(ProjectRedundantFile.FileName));
+        Assert.Equal(["FileName", "Id", "ProjectId"],
+            redundantFile.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsProjectAllowedToolToTheProjectAllowedToolsTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType allowedTool = EntityTypeOf<ProjectAllowedTool>(context);
+
+        Assert.Equal("ProjectAllowedTools", allowedTool.GetTableName());
+        AssertText(allowedTool, nameof(ProjectAllowedTool.ToolName), false, ProjectAllowedTool.ToolNameMaxLength);
+        AssertChildOf<Project>(allowedTool, "ProjectId", nameof(Project.AllowedTools));
+        AssertUniqueChildIndex(allowedTool, nameof(ProjectAllowedTool.ToolName));
+        Assert.Equal(["Id", "ProjectId", "ToolName"],
+            allowedTool.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsProjectEndpointToTheProjectEndpointsTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType endpoint = EntityTypeOf<ProjectEndpoint>(context);
+
+        Assert.Equal("ProjectEndpoints", endpoint.GetTableName());
+        AssertText(endpoint, nameof(ProjectEndpoint.Name), false, ProjectEndpoint.NameMaxLength);
+        AssertText(endpoint, nameof(ProjectEndpoint.EndpointName), true, ProjectEndpoint.EndpointNameMaxLength);
+        AssertText(endpoint, nameof(ProjectEndpoint.EndpointRoute), true, ProjectEndpoint.EndpointRouteMaxLength);
+        AssertText(endpoint, nameof(ProjectEndpoint.HttpMethod), false, ProjectEndpoint.HttpMethodMaxLength);
+        AssertText(endpoint, nameof(ProjectEndpoint.EndpointType), false, ProjectEndpoint.EndpointTypeMaxLength);
+        AssertText(endpoint, nameof(ProjectEndpoint.ReturnType), true, ProjectEndpoint.ReturnTypeMaxLength);
+        AssertChildOf<Project>(endpoint, "ProjectId", nameof(Project.Endpoints));
+        AssertUniqueChildIndex(endpoint, nameof(ProjectEndpoint.Name));
+        Assert.Equal(
+            [
+                "EndpointName", "EndpointRoute", "EndpointType", "HttpMethod", "Id", "Name", "ProjectId",
+                "RequireAuthorization", "ReturnType", "SendMessageToCurrentUser"
+            ], endpoint.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Model_MapsProjectRouteClassToTheProjectRouteClassesTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType routeClass = EntityTypeOf<ProjectRouteClass>(context);
+
+        Assert.Equal("ProjectRouteClasses", routeClass.GetTableName());
+        AssertText(routeClass, nameof(ProjectRouteClass.Name), false, ProjectRouteClass.NameMaxLength);
+        AssertText(routeClass, nameof(ProjectRouteClass.Root), true, ProjectRouteClass.RootMaxLength);
+        AssertText(routeClass, nameof(ProjectRouteClass.ApiVersion), true, ProjectRouteClass.ApiVersionMaxLength);
+        AssertText(routeClass, nameof(ProjectRouteClass.Base), true, ProjectRouteClass.BaseMaxLength);
+        AssertChildOf<Project>(routeClass, "ProjectId", nameof(Project.RouteClasses));
+        AssertUniqueChildIndex(routeClass, nameof(ProjectRouteClass.Name));
+        Assert.Equal(["ApiVersion", "Base", "Id", "Name", "ProjectId", "Root"],
+            routeClass.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
     //datetime instead of EF's datetime2. No entity of the model has such a column, so a test entity is added to it
     [Fact]
@@ -626,13 +848,16 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.GlobalSettings);
         Assert.NotNull(context.ProjectCreatorSettings);
         Assert.NotNull(context.ProjectTemplates);
+        Assert.NotNull(context.Projects);
     }
 
     //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
-    //cascade, and the root reaches the children through the collection navigation
+    //cascade, and the root reaches the children through the collection navigation. A child may also reference another
+    //aggregate, so the foreign key is the one to the root
     private static void AssertChildOf<TRoot>(IEntityType child, string foreignKeyName, string navigationName)
     {
-        IForeignKey foreignKey = Assert.Single(child.GetForeignKeys());
+        IForeignKey foreignKey =
+            Assert.Single(child.GetForeignKeys(), x => x.PrincipalEntityType.ClrType == typeof(TRoot));
         Assert.Equal(typeof(TRoot), foreignKey.PrincipalEntityType.ClrType);
         IProperty property = Assert.Single(foreignKey.Properties);
         Assert.Equal(foreignKeyName, property.Name);
@@ -658,6 +883,27 @@ public sealed class SupportToolsServerDbContextTests
             Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
             Assert.Equal("uniqueidentifier", foreignKey.Properties[0].GetColumnType());
         });
+    }
+
+    //A required foreign key to another aggregate, stored as the Guid of the referenced id, which refuses to delete the
+    //record in use
+    private static void AssertRequiredRestrictedReference<TReferenced>(IEntityType entityType, string propertyName)
+    {
+        IForeignKey foreignKey = Assert.Single(entityType.GetForeignKeys(),
+            x => x.PrincipalEntityType.ClrType == typeof(TReferenced));
+        IProperty property = Assert.Single(foreignKey.Properties);
+        Assert.Equal(propertyName, property.Name);
+        Assert.False(property.IsNullable);
+        Assert.Equal("uniqueidentifier", property.GetColumnType());
+        Assert.True(foreignKey.IsRequired);
+        Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
+    }
+
+    //A unique index on the project and the key of the child
+    private static void AssertUniqueChildIndex(IEntityType child, params string[] keyPropertyNames)
+    {
+        Assert.Contains(child.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name).SequenceEqual(["ProjectId", .. keyPropertyNames]));
     }
 
     //The only row has the fixed key of the singleton, and the check constraint refuses any other key. Check constraints
