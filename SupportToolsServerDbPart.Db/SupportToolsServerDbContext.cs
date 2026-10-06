@@ -20,6 +20,7 @@ using SupportToolsServerCore.Domain.Runtimes;
 using SupportToolsServerCore.Domain.Servers;
 using SupportToolsServerCore.Domain.Settings;
 using SupportToolsServerCore.Domain.SmartSchemas;
+using SupportToolsServerCore.Domain.StoredFiles;
 using SystemTools.DatabaseToolsShared;
 using SystemTools.SharedKernel;
 
@@ -71,6 +72,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<Server> Servers { get; set; }
 
     public DbSet<SmartSchema> SmartSchemas { get; set; }
+    public DbSet<StoredFile> StoredFiles { get; set; }
     //public DbSet<ApiKeyByRemoteIpAddress> ApiKeysByRemoteIpAddresses => Set<ApiKeyByRemoteIpAddress>();
 
     //დომენის მოვლენები შენახვის შემდეგ იგზავნება, ანუ ჰენდლერები უკვე შენახულ მონაცემებს ეხებიან

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Moq;
 using SupportToolsServerCore.Domain.ApiClients;
 using SupportToolsServerCore.Domain.DatabaseServerConnections;
@@ -24,6 +25,7 @@ using SupportToolsServerCore.Domain.Runtimes;
 using SupportToolsServerCore.Domain.Servers;
 using SupportToolsServerCore.Domain.Settings;
 using SupportToolsServerCore.Domain.SmartSchemas;
+using SupportToolsServerCore.Domain.StoredFiles;
 using SupportToolsServerDbPart.Db;
 using SystemTools.SharedKernel;
 using Xunit;
@@ -150,6 +152,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectRouteClass)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfo)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfoAllowedTool)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(StoredFile)));
         IEntityType gitRepo =Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -185,7 +188,8 @@ public sealed class SupportToolsServerDbContextTests
                 typeof(ReactAppTemplate),
                 typeof(Runtime),
                 typeof(Server),
-                typeof(SmartSchema)
+                typeof(SmartSchema),
+                typeof(StoredFile)
             }, versionedEntityTypes.Select(x => x.ClrType).ToHashSet());
         Assert.All(versionedEntityTypes, entityType =>
         {
@@ -870,19 +874,61 @@ public sealed class SupportToolsServerDbContextTests
             routeClass.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
+    //The path is the key of the file. The content is nvarchar(max): the validator, not the database, limits it
+    [Fact]
+    public void Model_MapsStoredFileToTheStoredFilesTable()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType storedFile = EntityTypeOf<StoredFile>(context);
+
+        Assert.Equal("StoredFiles", storedFile.GetTableName());
+        Assert.Contains(storedFile.GetIndexes(),
+            i => i.IsUnique && i.Properties.Single().Name == nameof(StoredFile.Path));
+        AssertText(storedFile, nameof(StoredFile.Path), false, StoredFile.PathMaxLength);
+        Assert.Equal("nvarchar(400)", storedFile.GetProperty(nameof(StoredFile.Path)).GetColumnType());
+        IProperty content = storedFile.GetProperty(nameof(StoredFile.Content));
+        Assert.False(content.IsNullable);
+        Assert.Null(content.GetMaxLength());
+        Assert.Equal("nvarchar(max)", content.GetColumnType());
+        AssertText(storedFile, nameof(StoredFile.Sha256), false, StoredFile.Sha256Length);
+        Assert.False(storedFile.GetProperty(nameof(StoredFile.Length)).IsNullable);
+        Assert.Equal("int", storedFile.GetProperty(nameof(StoredFile.Length)).GetColumnType());
+        Assert.False(storedFile.GetProperty(nameof(StoredFile.UpdatedAtUtc)).IsNullable);
+        Assert.Equal("uniqueidentifier", storedFile.GetProperty(nameof(StoredFile.Id)).GetColumnType());
+        Assert.Equal(["Content", "Id", "Length", "Path", "Sha256", "UpdatedAtUtc", "Version"],
+            storedFile.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
-    //datetime instead of EF's datetime2. No entity of the model has such a column, so a test entity is added to it
+    //datetime instead of EF's datetime2
     [Fact]
     public void Model_GivesADateTimeColumnTheTypeOfTheDefaultConvention()
     {
-        DbContextOptions<SupportToolsServerDbContext> options =
-            new DbContextOptionsBuilder<SupportToolsServerDbContext>().UseSqlServer(ConnectionString)
-                .ReplaceService<IModelCustomizer, DateTimeEntityModelCustomizer>().Options;
-        using var context = new SupportToolsServerDbContext(options, _dispatcher.Object);
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
 
-        IEntityType dateTimeEntity = EntityTypeOf<DateTimeEntity>(context);
+        IEntityType storedFile = EntityTypeOf<StoredFile>(context);
 
-        Assert.Equal("datetime", dateTimeEntity.GetProperty(nameof(DateTimeEntity.Moment)).GetColumnType());
+        Assert.Equal("datetime", storedFile.GetProperty(nameof(StoredFile.UpdatedAtUtc)).GetColumnType());
+    }
+
+    //The database keeps no DateTimeKind, so the time it returns is marked as UTC (the JSON then ends with Z); the value
+    //itself is written and read unchanged
+    [Fact]
+    public void Model_MarksTheUpdateTimeOfAStoredFileAsUtcWhenItIsRead()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+        var stored = new DateTime(2026, 10, 6, 8, 15, 30, 123, DateTimeKind.Unspecified);
+        var written = new DateTime(2026, 10, 6, 8, 15, 30, 123, DateTimeKind.Utc);
+
+        ValueConverter converter = Assert.IsType<ValueConverter>(
+            EntityTypeOf<StoredFile>(context).GetProperty(nameof(StoredFile.UpdatedAtUtc)).GetValueConverter(),
+            exactMatch: false);
+
+        var read = Assert.IsType<DateTime>(converter.ConvertFromProvider(stored));
+        Assert.Equal(DateTimeKind.Utc, read.Kind);
+        Assert.Equal(stored.Ticks, read.Ticks);
+        Assert.Equal(written, Assert.IsType<DateTime>(converter.ConvertToProvider(written)));
     }
 
     [Fact]
@@ -907,6 +953,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.ProjectCreatorSettings);
         Assert.NotNull(context.ProjectTemplates);
         Assert.NotNull(context.Projects);
+        Assert.NotNull(context.StoredFiles);
     }
 
     //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
@@ -1004,24 +1051,5 @@ public sealed class SupportToolsServerDbContextTests
         }
 
         return false;
-    }
-
-    private sealed class DateTimeEntity
-    {
-        public DateTime Moment { get; init; }
-    }
-
-    //Builds the model of the context and then adds the test entity, keyless because only its column matters
-    private sealed class DateTimeEntityModelCustomizer : RelationalModelCustomizer
-    {
-        public DateTimeEntityModelCustomizer(ModelCustomizerDependencies dependencies) : base(dependencies)
-        {
-        }
-
-        public override void Customize(ModelBuilder modelBuilder, DbContext context)
-        {
-            base.Customize(modelBuilder, context);
-            modelBuilder.Entity<DateTimeEntity>().HasNoKey();
-        }
     }
 }
