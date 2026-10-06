@@ -901,11 +901,15 @@ public sealed class SupportToolsServerDbContextTests
     }
 
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
-    //datetime instead of EF's datetime2
+    //datetime instead of EF's datetime2. EF caches the model of the shared options, so this test builds a model of its
+    //own: then the column type comes from the conventions that this context registers now
     [Fact]
     public void Model_GivesADateTimeColumnTheTypeOfTheDefaultConvention()
     {
-        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+        DbContextOptions<SupportToolsServerDbContext> options =
+            new DbContextOptionsBuilder<SupportToolsServerDbContext>().UseSqlServer(ConnectionString)
+                .EnableServiceProviderCaching(false).Options;
+        using var context = new SupportToolsServerDbContext(options, _dispatcher.Object);
 
         IEntityType storedFile = EntityTypeOf<StoredFile>(context);
 
