@@ -148,6 +148,8 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectAllowedTool)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectEndpoint)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ProjectRouteClass)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfo)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfoAllowedTool)));
         IEntityType gitRepo =Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -647,25 +649,29 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal(38, project.GetProperties().Count());
     }
 
-    //Both database parameters are optional owned types in the same row, with the columns of the reusable
-    //configuration. Their required fields are stored in nullable columns, so EF can tell a missing part from an empty
-    //one, and every reference is an optional foreign key that refuses to delete the record in use
+    //The database parameters of a project and of a server info are optional owned types in the owner's row, with the
+    //columns of the reusable configuration. Their required fields are stored in nullable columns, so EF can tell a
+    //missing part from an empty one, and every reference is an optional foreign key that refuses to delete the record
+    //in use
     [Theory]
-    [InlineData(nameof(Project.DevDatabaseParameters))]
-    [InlineData(nameof(Project.ProdCopyDatabaseParameters))]
-    public void Model_MapsTheDatabaseParametersOfAProjectToOptionalOwnedColumnsWithRestrictedReferences(
-        string navigationName)
+    [InlineData(typeof(Project), "Projects", nameof(Project.DevDatabaseParameters))]
+    [InlineData(typeof(Project), "Projects", nameof(Project.ProdCopyDatabaseParameters))]
+    [InlineData(typeof(ServerInfo), "ServerInfos", nameof(ServerInfo.CurrentDatabaseParameters))]
+    [InlineData(typeof(ServerInfo), "ServerInfos", nameof(ServerInfo.NewDatabaseParameters))]
+    public void Model_MapsTheDatabaseParametersToOptionalOwnedColumnsWithRestrictedReferences(Type ownerType,
+        string tableName, string navigationName)
     {
         using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
-        var projectsTable = StoreObjectIdentifier.Table("Projects");
+        var ownerTable = StoreObjectIdentifier.Table(tableName);
+        IEntityType owner = Assert.IsType<IEntityType>(context.Model.FindEntityType(ownerType), exactMatch: false);
 
-        INavigation navigation = EntityTypeOf<Project>(context).GetNavigations().Single(x => x.Name == navigationName);
+        INavigation navigation = owner.GetNavigations().Single(x => x.Name == navigationName);
 
         Assert.True(navigation.ForeignKey.IsOwnership);
         Assert.False(navigation.ForeignKey.IsRequiredDependent);
         IEntityType parameters = navigation.TargetEntityType;
         Assert.Equal(typeof(DatabaseParameters), parameters.ClrType);
-        Assert.Equal("Projects", parameters.GetTableName());
+        Assert.Equal(tableName, parameters.GetTableName());
         AssertText(parameters, nameof(DatabaseParameters.DatabaseRecoveryModel), true,
             DatabaseParameters.DatabaseRecoveryModelMaxLength);
         AssertText(parameters, nameof(DatabaseParameters.DbServerFoldersSetName), true,
@@ -684,7 +690,7 @@ public sealed class SupportToolsServerDbContextTests
             {
                 IProperty property = parameters.GetProperty(name);
                 Assert.False(property.IsNullable);
-                Assert.True(property.IsColumnNullable(projectsTable));
+                Assert.True(property.IsColumnNullable(ownerTable));
             });
         AssertOptionalRestrictedReferences(parameters,
         [
@@ -699,8 +705,60 @@ public sealed class SupportToolsServerDbContextTests
             "DbServerFoldersSetName", "FileStorageId", "SkipBackupBeforeRestore", "SmartSchemaId", "Verify"
         ];
         Assert.Equal(["Id", .. fields.Select(x => $"{navigationName}_{x}")],
-            parameters.GetProperties().Select(x => x.GetColumnName(projectsTable)).OrderBy(x => x != "Id")
+            parameters.GetProperties().Select(x => x.GetColumnName(ownerTable)).OrderBy(x => x != "Id")
                 .ThenBy(x => x, StringComparer.Ordinal));
+    }
+
+    //A child of the Project aggregate with references to three other aggregates: the server and the environment are
+    //required, the web agent is optional, and all of them refuse to delete the record in use. The pair of the server
+    //and the environment appears once in its project. The paths are canonical paths, stored as they come
+    [Fact]
+    public void Model_MapsServerInfoToTheServerInfosTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType serverInfo = EntityTypeOf<ServerInfo>(context);
+
+        Assert.Equal("ServerInfos", serverInfo.GetTableName());
+        AssertChildOf<Project>(serverInfo, "ProjectId", nameof(Project.ServerInfos));
+        AssertRequiredRestrictedReference<Server>(serverInfo, nameof(ServerInfo.ServerId));
+        AssertRequiredRestrictedReference<DeploymentEnvironment>(serverInfo, nameof(ServerInfo.EnvironmentId));
+        IForeignKey webAgent = Assert.Single(serverInfo.GetForeignKeys(),
+            x => x.PrincipalEntityType.ClrType == typeof(ApiClient));
+        Assert.Equal(nameof(ServerInfo.WebAgentForCheckId), Assert.Single(webAgent.Properties).Name);
+        Assert.False(webAgent.IsRequired);
+        Assert.Equal(DeleteBehavior.Restrict, webAgent.DeleteBehavior);
+        Assert.Equal("uniqueidentifier", webAgent.Properties[0].GetColumnType());
+        AssertText(serverInfo, nameof(ServerInfo.ApiVersionId), true, ServerInfo.ApiVersionIdMaxLength);
+        AssertText(serverInfo, nameof(ServerInfo.AppSettingsJsonSourceFileName), true, ServerInfo.PathMaxLength);
+        AssertText(serverInfo, nameof(ServerInfo.AppSettingsEncodedJsonFileName), true, ServerInfo.PathMaxLength);
+        AssertText(serverInfo, nameof(ServerInfo.ServiceUserName), true, ServerInfo.ServiceUserNameMaxLength);
+        Assert.False(serverInfo.GetProperty(nameof(ServerInfo.ServerSidePort)).IsNullable);
+        AssertUniqueChildIndex(serverInfo, nameof(ServerInfo.ServerId), nameof(ServerInfo.EnvironmentId));
+        Assert.Equal(
+            [
+                "ApiVersionId", "AppSettingsEncodedJsonFileName", "AppSettingsJsonSourceFileName", "EnvironmentId",
+                "Id", "ProjectId", "ServerId", "ServerSidePort", "ServiceUserName", "WebAgentForCheckId"
+            ], serverInfo.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //A child of the server info: deleted in cascade with it, also when an update replaces the server info, and every
+    //tool appears once in its server info
+    [Fact]
+    public void Model_MapsServerInfoAllowedToolToTheServerInfoAllowedToolsTableAsAChildOfTheServerInfo()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType allowedTool = EntityTypeOf<ServerInfoAllowedTool>(context);
+
+        Assert.Equal("ServerInfoAllowedTools", allowedTool.GetTableName());
+        AssertText(allowedTool, nameof(ServerInfoAllowedTool.ToolName), false,
+            ServerInfoAllowedTool.ToolNameMaxLength);
+        AssertChildOf<ServerInfo>(allowedTool, "ServerInfoId", nameof(ServerInfo.AllowedTools));
+        Assert.Contains(allowedTool.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name).SequenceEqual(["ServerInfoId", "ToolName"]));
+        Assert.Equal(["Id", "ServerInfoId", "ToolName"],
+            allowedTool.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
     //The children of the aggregate: a required foreign key that cascades, so the replaced children of an update are

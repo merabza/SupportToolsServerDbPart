@@ -8,7 +8,7 @@ using SupportToolsServerCore.Domain.SmartSchemas;
 namespace SupportToolsServerDbPart.Db.Configurations;
 
 //ბაზის პარამეტრების owned type, მფლობელის ცხრილში (table splitting): სვეტები <ნავიგაცია>_<ველი> სახელებითაა. პროექტი
-//მას DevDatabaseParameters-ისა და ProdCopyDatabaseParameters-ისთვის იყენებს, B7 კი ServerInfo-ს
+//მას DevDatabaseParameters-ისა და ProdCopyDatabaseParameters-ისთვის იყენებს, ServerInfo კი
 //CurrentDatabaseParameters-ისა და NewDatabaseParameters-ისთვის. ნავიგაცია არასავალდებულოა: სავალდებულო CommandTimeOut და
 //SkipBackupBeforeRestore ველების სვეტები NULL-ია მხოლოდ მაშინ, როცა ნაწილი არ არის, ამიტომ EF null-სა და ცარიელ ნაწილს
 //ერთმანეთისგან არჩევს
