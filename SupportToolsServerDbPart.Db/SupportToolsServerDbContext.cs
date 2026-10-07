@@ -11,6 +11,7 @@ using SupportToolsServerCore.Domain.DotnetTools;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
 using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
+using SupportToolsServerCore.Domain.GitRepoProjects;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Projects;
@@ -58,6 +59,7 @@ public sealed class SupportToolsServerDbContext : DbContext, ISupportToolsServer
     public DbSet<DeploymentEnvironment> Environments { get; set; }
     public DbSet<FileStorage> FileStorages { get; set; }
     public DbSet<GitIgnoreFileType> GitIgnoreFileTypes { get; set; }
+    public DbSet<GitRepoProject> GitRepoProjects { get; set; }
 
     public DbSet<GitRepo> GitRepos { get; set; }
     public DbSet<GlobalSettings> GlobalSettings { get; set; }

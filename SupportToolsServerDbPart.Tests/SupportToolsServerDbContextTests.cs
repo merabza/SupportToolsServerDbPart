@@ -15,6 +15,7 @@ using SupportToolsServerCore.Domain.DotnetTools;
 using SupportToolsServerCore.Domain.EditorConfigFileTypes;
 using SupportToolsServerCore.Domain.FileStorages;
 using SupportToolsServerCore.Domain.GitIgnoreFileTypes;
+using SupportToolsServerCore.Domain.GitRepoProjects;
 using SupportToolsServerCore.Domain.GitRepos;
 using SupportToolsServerCore.Domain.NpmPackages;
 using SupportToolsServerCore.Domain.Primitives;
@@ -153,6 +154,8 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfo)));
         Assert.NotNull(context.Model.FindEntityType(typeof(ServerInfoAllowedTool)));
         Assert.NotNull(context.Model.FindEntityType(typeof(StoredFile)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(GitRepoProject)));
+        Assert.NotNull(context.Model.FindEntityType(typeof(GitRepoProjectDependency)));
         IEntityType gitRepo =Assert.IsType<IEntityType>(context.Model.FindEntityType(typeof(GitRepo)),
             exactMatch: false);
         Assert.Null(gitRepo.FindProperty(nameof(GitRepo.DomainEvents)));
@@ -900,6 +903,55 @@ public sealed class SupportToolsServerDbContextTests
             storedFile.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 
+    //The projects of a git are the result of its scan (B9): a required foreign key that cascades, so they go with the
+    //git, and one row per project file of the git. The key of the unique index fits the 900 bytes of SQL Server
+    [Fact]
+    public void Model_MapsGitRepoProjectToTheGitRepoProjectsTableWithACascadingGit()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType gitRepoProject = EntityTypeOf<GitRepoProject>(context);
+
+        Assert.Equal("GitRepoProjects", gitRepoProject.GetTableName());
+        AssertText(gitRepoProject, nameof(GitRepoProject.ProjectRelativePath), false,
+            GitRepoProject.ProjectRelativePathMaxLength);
+        AssertText(gitRepoProject, nameof(GitRepoProject.ProjectFileName), false,
+            GitRepoProject.ProjectFileNameMaxLength);
+        IForeignKey foreignKey = Assert.Single(gitRepoProject.GetForeignKeys());
+        Assert.Equal(typeof(GitRepo), foreignKey.PrincipalEntityType.ClrType);
+        IProperty gitRepoId = Assert.Single(foreignKey.Properties);
+        Assert.Equal(nameof(GitRepoProject.GitRepoId), gitRepoId.Name);
+        Assert.False(gitRepoId.IsNullable);
+        Assert.Equal("uniqueidentifier", gitRepoId.GetColumnType());
+        Assert.True(foreignKey.IsRequired);
+        Assert.Equal(DeleteBehavior.Cascade, foreignKey.DeleteBehavior);
+        Assert.Contains(gitRepoProject.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name)
+                .SequenceEqual(["GitRepoId", "ProjectRelativePath", "ProjectFileName"]));
+        Assert.InRange(16 + 2 * (GitRepoProject.ProjectRelativePathMaxLength + GitRepoProject.ProjectFileNameMaxLength),
+            0, 900);
+        Assert.Equal(["GitRepoId", "Id", "ProjectFileName", "ProjectRelativePath"],
+            gitRepoProject.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
+    //The dependencies are children of the project: they go with it, and a project depends on a name once
+    [Fact]
+    public void Model_MapsGitRepoProjectDependencyToTheGitRepoProjectDependenciesTableAsAChildOfTheProject()
+    {
+        using var context = new SupportToolsServerDbContext(Options, _dispatcher.Object);
+
+        IEntityType dependency = EntityTypeOf<GitRepoProjectDependency>(context);
+
+        Assert.Equal("GitRepoProjectDependencies", dependency.GetTableName());
+        AssertText(dependency, nameof(GitRepoProjectDependency.ProjectName), false,
+            GitRepoProjectDependency.ProjectNameMaxLength);
+        AssertChildOf<GitRepoProject>(dependency, "GitRepoProjectId", nameof(GitRepoProject.Dependencies));
+        Assert.Contains(dependency.GetIndexes(),
+            i => i.IsUnique && i.Properties.Select(x => x.Name).SequenceEqual(["GitRepoProjectId", "ProjectName"]));
+        Assert.Equal(["GitRepoProjectId", "Id", "ProjectName"],
+            dependency.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
+    }
+
     //The context registers the default convention of SystemTools, which gives a DateTime column the SQL Server type
     //datetime instead of EF's datetime2. EF caches the model of the shared options, so this test builds a model of its
     //own: then the column type comes from the conventions that this context registers now
@@ -958,6 +1010,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.NotNull(context.ProjectTemplates);
         Assert.NotNull(context.Projects);
         Assert.NotNull(context.StoredFiles);
+        Assert.NotNull(context.GitRepoProjects);
     }
 
     //The child has a required shadow foreign key to the root, stored as the Guid of the root's id and deleted in
