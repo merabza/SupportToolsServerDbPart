@@ -4,9 +4,19 @@
         <File Path="Directory.Build.props" />
         <File Path="Directory.Packages.props" />
     </Folder>
-    <Project Path="SeedSupportToolsServerDb/SeedSupportToolsServerDb.csproj" />
-    <Project Path="SupportToolsServerDb/SupportToolsServerDb.csproj" />
-    <Project Path="SupportToolsServerDbDataSeeding/SupportToolsServerDbDataSeeding.csproj" />
-    <Project Path="SupportToolsServerDbNewDataSeeding/SupportToolsServerDbNewDataSeeding.csproj" />
-    <Project Path="SupportToolsServerDbPart/SupportToolsServerDbPart.csproj" />
+    <Folder Name="/SupportToolsServerCore/">
+        <Project Path="../SupportToolsServerCore/SupportToolsServerCore.Application.Abstractions/SupportToolsServerCore.Application.Abstractions.csproj" />
+        <Project Path="../SupportToolsServerCore/SupportToolsServerCore.Domain/SupportToolsServerCore.Domain.csproj" />
+    </Folder>
+    <Folder Name="/SystemTools/">
+        <Project Path="../SystemTools/SystemTools.DatabaseToolsShared/SystemTools.DatabaseToolsShared.csproj" />
+        <Project Path="../SystemTools/SystemTools.Domain.Abstractions/SystemTools.Domain.Abstractions.csproj" />
+        <Project Path="../SystemTools/SystemTools.RepositoriesShared/SystemTools.RepositoriesShared.csproj" />
+        <Project Path="../SystemTools/SystemTools.SharedKernel/SystemTools.SharedKernel.csproj" />
+        <Project Path="../SystemTools/SystemTools.SystemToolsShared/SystemTools.SystemToolsShared.csproj" />
+    </Folder>
+    <Folder Name="/Tests/">
+        <Project Path="SupportToolsServerDbPart.Tests/SupportToolsServerDbPart.Tests.csproj" />
+    </Folder>
+    <Project Path="SupportToolsServerDbPart.Db/SupportToolsServerDbPart.Db.csproj" />
 </Solution>
