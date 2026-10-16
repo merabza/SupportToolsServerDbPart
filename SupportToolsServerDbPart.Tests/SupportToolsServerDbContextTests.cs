@@ -339,7 +339,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal(
             [
                 //nameof(FileStorage.FileNameMaxLength), 
-                nameof(FileStorage.FileSizeSplitPositionInRow),
+                //nameof(FileStorage.FileSizeSplitPositionInRow),
                 nameof(FileStorage.FileStoragePath), nameof(FileStorage.FtpSiteLsFileOffset), nameof(FileStorage.Id),
                 nameof(FileStorage.Name), nameof(FileStorage.Password), nameof(FileStorage.UserName),
                 nameof(FileStorage.Version)
