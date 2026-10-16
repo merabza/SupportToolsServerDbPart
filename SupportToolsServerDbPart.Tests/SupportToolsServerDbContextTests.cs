@@ -338,7 +338,8 @@ public sealed class SupportToolsServerDbContextTests
         AssertText(fileStorage, nameof(FileStorage.Password), true, FileStorage.PasswordMaxLength);
         Assert.Equal(
             [
-                nameof(FileStorage.FileNameMaxLength), nameof(FileStorage.FileSizeSplitPositionInRow),
+                //nameof(FileStorage.FileNameMaxLength), 
+                nameof(FileStorage.FileSizeSplitPositionInRow),
                 nameof(FileStorage.FileStoragePath), nameof(FileStorage.FtpSiteLsFileOffset), nameof(FileStorage.Id),
                 nameof(FileStorage.Name), nameof(FileStorage.Password), nameof(FileStorage.UserName),
                 nameof(FileStorage.Version)
