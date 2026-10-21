@@ -655,6 +655,9 @@ public sealed class SupportToolsServerDbContextTests
                 nameof(Project.UseLocalPackages)
             ],
             name => Assert.False(project.GetProperty(name).IsNullable));
+        IProperty useLocalPackages = project.GetProperty(nameof(Project.UseLocalPackages));
+        Assert.True(Assert.IsType<bool>(useLocalPackages.GetDefaultValue()));
+        Assert.True(Assert.IsType<bool>(useLocalPackages.Sentinel));
         AssertOptionalRestrictedReferences(project,
             [(nameof(Project.EditorConfigFileTypeId), typeof(EditorConfigFileType))]);
         Assert.Equal(39, project.GetProperties().Count());
