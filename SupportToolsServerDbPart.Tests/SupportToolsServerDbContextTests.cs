@@ -650,11 +650,14 @@ public sealed class SupportToolsServerDbContextTests
                 nameof(Project.PairedDbObjectsResultFileName)
             ], name => AssertText(project, name, true, Project.PathMaxLength));
         Assert.All(
-            [nameof(Project.MajorVersion), nameof(Project.MinorVersion), nameof(Project.UseAlternativeWebAgent)],
+            [
+                nameof(Project.MajorVersion), nameof(Project.MinorVersion), nameof(Project.UseAlternativeWebAgent),
+                nameof(Project.UseLocalPackages)
+            ],
             name => Assert.False(project.GetProperty(name).IsNullable));
         AssertOptionalRestrictedReferences(project,
             [(nameof(Project.EditorConfigFileTypeId), typeof(EditorConfigFileType))]);
-        Assert.Equal(38, project.GetProperties().Count());
+        Assert.Equal(39, project.GetProperties().Count());
     }
 
     //The database parameters of a project and of a server info are optional owned types in the owner's row, with the
