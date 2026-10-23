@@ -547,8 +547,6 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal("ProjectCreatorSettings", projectCreatorSettings.GetTableName());
         AssertSingletonCheck<ProjectCreatorSettings>(context, "CK_ProjectCreatorSettings_Singleton");
         Assert.False(projectCreatorSettings.GetProperty(nameof(ProjectCreatorSettings.IndentSize)).IsNullable);
-        AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.FakeHostProjectName), true,
-            ProjectCreatorSettings.FakeHostProjectNameMaxLength);
         AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.ProjectsFolderPathReal), true,
             ProjectCreatorSettings.ProjectsFolderPathRealMaxLength);
         AssertText(projectCreatorSettings, nameof(ProjectCreatorSettings.SecretsFolderPathReal), true,
@@ -564,8 +562,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal(
             [
                 nameof(ProjectCreatorSettings.DatabaseExchangeFileStorageId),
-                nameof(ProjectCreatorSettings.DeveloperDbConnectionId),
-                nameof(ProjectCreatorSettings.FakeHostProjectName), nameof(ProjectCreatorSettings.Id),
+                nameof(ProjectCreatorSettings.DeveloperDbConnectionId), nameof(ProjectCreatorSettings.Id),
                 nameof(ProjectCreatorSettings.IndentSize), nameof(ProjectCreatorSettings.ProductionEnvironmentId),
                 nameof(ProjectCreatorSettings.ProductionServerId),
                 nameof(ProjectCreatorSettings.ProjectsFolderPathReal),
@@ -628,9 +625,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.All(
             [
                 nameof(Project.MainProjectName), nameof(Project.ApiContractsProjectName), nameof(Project.SpaProjectName),
-                nameof(Project.DbContextName), nameof(Project.ProjectShortPrefix),
-                nameof(Project.ScaffoldSeederProjectName), nameof(Project.DbContextProjectName),
-                nameof(Project.NewDataSeedingClassLibProjectName)
+                nameof(Project.DbContextName)
             ], name => AssertText(project, name, true, Project.CodeNameMaxLength));
         Assert.All(
             [
@@ -642,11 +637,7 @@ public sealed class SupportToolsServerDbContextTests
                 nameof(Project.ProjectFolderName), nameof(Project.SolutionFileName),
                 nameof(Project.ProjectSecurityFolderPath), nameof(Project.MigrationStartupProjectFilePath),
                 nameof(Project.MigrationProjectFilePath), nameof(Project.DataSeederRulesByTableStartupProjectFilePath),
-                nameof(Project.OldDataConvertorForDataSeeder), nameof(Project.SeedProjectFilePath),
-                nameof(Project.SeedProjectParametersFilePath), nameof(Project.ExcludesRulesParametersFilePath),
-                nameof(Project.AppSetEnKeysJsonFileName), nameof(Project.MigrationSqlFilesFolder),
-                nameof(Project.PrepareProdCopyDatabaseProjectFilePath),
-                nameof(Project.PrepareProdCopyDatabaseProjectParametersFilePath),
+                nameof(Project.OldDataConvertorForDataSeeder), nameof(Project.AppSetEnKeysJsonFileName),
                 nameof(Project.PairedDbObjectsResultFileName)
             ], name => AssertText(project, name, true, Project.PathMaxLength));
         Assert.All(
@@ -660,7 +651,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.True(Assert.IsType<bool>(useLocalPackages.Sentinel));
         AssertOptionalRestrictedReferences(project,
             [(nameof(Project.EditorConfigFileTypeId), typeof(EditorConfigFileType))]);
-        Assert.Equal(39, project.GetProperties().Count());
+        Assert.Equal(29, project.GetProperties().Count());
     }
 
     //The database parameters of a project and of a server info are optional owned types in the owner's row, with the
@@ -788,12 +779,8 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal("ProjectGitRepos", gitRepo.GetTableName());
         AssertChildOf<Project>(gitRepo, "ProjectId", nameof(Project.GitRepos));
         AssertRequiredRestrictedReference<GitRepo>(gitRepo, nameof(ProjectGitRepo.GitRepoId));
-        IProperty kind = gitRepo.GetProperty(nameof(ProjectGitRepo.Kind));
-        Assert.False(kind.IsNullable);
-        Assert.Equal(ProjectGitRepo.KindMaxLength, kind.GetMaxLength());
-        Assert.Equal(typeof(string), kind.GetTypeMapping().Converter?.ProviderClrType);
-        AssertUniqueChildIndex(gitRepo, nameof(ProjectGitRepo.GitRepoId), nameof(ProjectGitRepo.Kind));
-        Assert.Equal(["GitRepoId", "Id", "Kind", "ProjectId"],
+        AssertUniqueChildIndex(gitRepo, nameof(ProjectGitRepo.GitRepoId));
+        Assert.Equal(["GitRepoId", "Id", "ProjectId"],
             gitRepo.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 

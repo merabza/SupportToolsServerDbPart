@@ -20,9 +20,6 @@ public sealed class ProjectGitRepoConfiguration : IEntityTypeConfiguration<Proje
         builder.Property(x => x.GitRepoId)
             .HasConversion(gitRepoId => gitRepoId.Value, guidValue => new GitRepoId(guidValue)).IsRequired();
 
-        //როლი სახელით ინახება (Main, ScaffoldSeed)
-        builder.Property(x => x.Kind).HasConversion<string>().IsRequired().HasMaxLength(ProjectGitRepo.KindMaxLength);
-
         //შვილები პროექტთან ერთად იშლება. კავშირი სავალდებულოა, ამიტომ განახლებისას ჩანაცვლებული შვილიც იშლება
         builder.HasOne<Project>().WithMany(x => x.GitRepos).HasForeignKey(ProjectConfiguration.ProjectIdColumn)
             .IsRequired().OnDelete(DeleteBehavior.Cascade);
@@ -30,8 +27,7 @@ public sealed class ProjectGitRepoConfiguration : IEntityTypeConfiguration<Proje
         //პროექტის მიერ გამოყენებული git-ის წაშლა ბაზაშიც იკრძალება (README §4.2)
         builder.HasOne<GitRepo>().WithMany().HasForeignKey(x => x.GitRepoId).OnDelete(DeleteBehavior.Restrict);
 
-        //ერთი git ერთ როლში პროექტში ერთხელ გვხვდება
-        builder.HasIndex(ProjectConfiguration.ProjectIdColumn, nameof(ProjectGitRepo.GitRepoId),
-            nameof(ProjectGitRepo.Kind)).IsUnique();
+        //ერთი git პროექტში ერთხელ გვხვდება
+        builder.HasIndex(ProjectConfiguration.ProjectIdColumn, nameof(ProjectGitRepo.GitRepoId)).IsUnique();
     }
 }

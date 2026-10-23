@@ -23,7 +23,6 @@ public sealed class ProjectCreatorSettingsConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Id).HasConversion(projectCreatorSettingsId => projectCreatorSettingsId.Value,
             guidValue => new ProjectCreatorSettingsId(guidValue)).IsRequired();
 
-        builder.Property(x => x.FakeHostProjectName).HasMaxLength(ProjectCreatorSettings.FakeHostProjectNameMaxLength);
         builder.Property(x => x.ProjectsFolderPathReal)
             .HasMaxLength(ProjectCreatorSettings.ProjectsFolderPathRealMaxLength);
         builder.Property(x => x.SecretsFolderPathReal)
