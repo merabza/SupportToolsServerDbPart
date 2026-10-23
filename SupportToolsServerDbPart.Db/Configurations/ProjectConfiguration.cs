@@ -29,10 +29,6 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(x => x.ApiContractsProjectName).HasMaxLength(Project.CodeNameMaxLength);
         builder.Property(x => x.SpaProjectName).HasMaxLength(Project.CodeNameMaxLength);
         builder.Property(x => x.DbContextName).HasMaxLength(Project.CodeNameMaxLength);
-        builder.Property(x => x.ProjectShortPrefix).HasMaxLength(Project.CodeNameMaxLength);
-        builder.Property(x => x.ScaffoldSeederProjectName).HasMaxLength(Project.CodeNameMaxLength);
-        builder.Property(x => x.DbContextProjectName).HasMaxLength(Project.CodeNameMaxLength);
-        builder.Property(x => x.NewDataSeedingClassLibProjectName).HasMaxLength(Project.CodeNameMaxLength);
 
         builder.Property(x => x.ProgramArchiveDateMask).HasMaxLength(Project.MaskMaxLength);
         builder.Property(x => x.ProgramArchiveExtension).HasMaxLength(Project.MaskMaxLength);
@@ -46,13 +42,7 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(x => x.MigrationProjectFilePath).HasMaxLength(Project.PathMaxLength);
         builder.Property(x => x.DataSeederRulesByTableStartupProjectFilePath).HasMaxLength(Project.PathMaxLength);
         builder.Property(x => x.OldDataConvertorForDataSeeder).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.SeedProjectFilePath).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.SeedProjectParametersFilePath).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.ExcludesRulesParametersFilePath).HasMaxLength(Project.PathMaxLength);
         builder.Property(x => x.AppSetEnKeysJsonFileName).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.MigrationSqlFilesFolder).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.PrepareProdCopyDatabaseProjectFilePath).HasMaxLength(Project.PathMaxLength);
-        builder.Property(x => x.PrepareProdCopyDatabaseProjectParametersFilePath).HasMaxLength(Project.PathMaxLength);
         builder.Property(x => x.PairedDbObjectsResultFileName).HasMaxLength(Project.PathMaxLength);
 
         builder.Property(x => x.KeyGuidPart).HasMaxLength(Project.KeyGuidPartMaxLength);
