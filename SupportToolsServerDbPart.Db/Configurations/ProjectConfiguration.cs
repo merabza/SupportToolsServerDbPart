@@ -50,6 +50,7 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         //ახალ ჩანაწერში სვეტის ნაგულისხმევი მნიშვნელობა true-ა. sentinel-იც true-ა, ამიტომ EF INSERT-ში false-ს
         //ყოველთვის გზავნის (CLR-ის ნაგულისხმევი false-ის sentinel-ით false ბაზის default-ით true გახდებოდა)
         builder.Property(x => x.UseLocalPackages).HasDefaultValue(true).HasSentinel(true);
+        builder.Property(x => x.UsesDatabase).HasDefaultValue(true).HasSentinel(true);
 
         //optimistic concurrency-ის token-ი (CLAUDE.md, Registry conventions)
         builder.Property(x => x.Version).IsConcurrencyToken().HasDefaultValue(EntityVersion.Initial);
