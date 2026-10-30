@@ -643,15 +643,18 @@ public sealed class SupportToolsServerDbContextTests
         Assert.All(
             [
                 nameof(Project.MajorVersion), nameof(Project.MinorVersion), nameof(Project.UseAlternativeWebAgent),
-                nameof(Project.UseLocalPackages)
+                nameof(Project.UseLocalPackages), nameof(Project.UsesDatabase)
             ],
             name => Assert.False(project.GetProperty(name).IsNullable));
         IProperty useLocalPackages = project.GetProperty(nameof(Project.UseLocalPackages));
         Assert.True(Assert.IsType<bool>(useLocalPackages.GetDefaultValue()));
         Assert.True(Assert.IsType<bool>(useLocalPackages.Sentinel));
+        IProperty usesDatabase = project.GetProperty(nameof(Project.UsesDatabase));
+        Assert.True(Assert.IsType<bool>(usesDatabase.GetDefaultValue()));
+        Assert.True(Assert.IsType<bool>(usesDatabase.Sentinel));
         AssertOptionalRestrictedReferences(project,
             [(nameof(Project.EditorConfigFileTypeId), typeof(EditorConfigFileType))]);
-        Assert.Equal(29, project.GetProperties().Count());
+        Assert.Equal(30, project.GetProperties().Count());
     }
 
     //The database parameters of a project and of a server info are optional owned types in the owner's row, with the
