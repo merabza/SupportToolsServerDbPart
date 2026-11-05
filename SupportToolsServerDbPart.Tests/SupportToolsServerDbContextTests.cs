@@ -741,13 +741,15 @@ public sealed class SupportToolsServerDbContextTests
         AssertText(serverInfo, nameof(ServerInfo.AppSettingsJsonSourceFileName), true, ServerInfo.PathMaxLength);
         AssertText(serverInfo, nameof(ServerInfo.AppSettingsEncodedJsonFileName), true, ServerInfo.PathMaxLength);
         AssertText(serverInfo, nameof(ServerInfo.ServiceUserName), true, ServerInfo.ServiceUserNameMaxLength);
+        AssertText(serverInfo, nameof(ServerInfo.SpaEnvMode), true, ServerInfo.SpaEnvModeMaxLength);
         Assert.False(serverInfo.GetProperty(nameof(ServerInfo.ServerSidePort)).IsNullable);
         Assert.False(serverInfo.GetProperty(nameof(ServerInfo.OpenPort)).IsNullable);
         AssertUniqueChildIndex(serverInfo, nameof(ServerInfo.ServerId), nameof(ServerInfo.EnvironmentId));
         Assert.Equal(
             [
                 "ApiVersionId", "AppSettingsEncodedJsonFileName", "AppSettingsJsonSourceFileName", "EnvironmentId",
-                "Id", "OpenPort", "ProjectId", "ServerId", "ServerSidePort", "ServiceUserName", "WebAgentForCheckId"
+                "Id", "OpenPort", "ProjectId", "ServerId", "ServerSidePort", "ServiceUserName", "SpaEnvMode",
+                "WebAgentForCheckId"
             ], serverInfo.GetProperties().Select(x => x.Name).Order(StringComparer.Ordinal));
     }
 

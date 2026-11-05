@@ -36,6 +36,7 @@ public sealed class ServerInfoConfiguration : IEntityTypeConfiguration<ServerInf
         builder.Property(x => x.AppSettingsJsonSourceFileName).HasMaxLength(ServerInfo.PathMaxLength);
         builder.Property(x => x.AppSettingsEncodedJsonFileName).HasMaxLength(ServerInfo.PathMaxLength);
         builder.Property(x => x.ServiceUserName).HasMaxLength(ServerInfo.ServiceUserNameMaxLength);
+        builder.Property(x => x.SpaEnvMode).HasMaxLength(ServerInfo.SpaEnvModeMaxLength);
 
         //ServerInfo-ები პროექტთან ერთად იშლება. კავშირი სავალდებულოა, ამიტომ განახლებისას ჩანაცვლებული ServerInfo-ც
         //იშლება, თავის ინსტრუმენტებთან ერთად
