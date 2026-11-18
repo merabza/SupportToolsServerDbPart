@@ -25,6 +25,7 @@ public sealed class DatabaseServerConnectionConfiguration : IEntityTypeConfigura
         builder.Property(x => x.ServerAddress).HasMaxLength(DatabaseServerConnection.ServerAddressMaxLength);
         builder.Property(x => x.ServerUser).HasMaxLength(DatabaseServerConnection.ServerUserMaxLength);
         builder.Property(x => x.ServerPass).HasMaxLength(DatabaseServerConnection.ServerPassMaxLength);
+        builder.Property(x => x.DatabaseName).HasMaxLength(DatabaseServerConnection.DatabaseNameMaxLength);
 
         //optimistic concurrency-ის token-ი (CLAUDE.md, Registry conventions)
         builder.Property(x => x.Version).IsConcurrencyToken().HasDefaultValue(EntityVersion.Initial);

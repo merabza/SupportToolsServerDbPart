@@ -386,6 +386,8 @@ public sealed class SupportToolsServerDbContextTests
             DatabaseServerConnection.ServerUserMaxLength);
         AssertText(connection, nameof(DatabaseServerConnection.ServerPass), true,
             DatabaseServerConnection.ServerPassMaxLength);
+        AssertText(connection, nameof(DatabaseServerConnection.DatabaseName), true,
+            DatabaseServerConnection.DatabaseNameMaxLength);
         IForeignKey webAgent = Assert.Single(connection.GetForeignKeys());
         Assert.Equal(typeof(ApiClient), webAgent.PrincipalEntityType.ClrType);
         Assert.Equal(nameof(DatabaseServerConnection.DbWebAgentId), Assert.Single(webAgent.Properties).Name);
@@ -394,7 +396,7 @@ public sealed class SupportToolsServerDbContextTests
         Assert.Equal("uniqueidentifier", webAgent.Properties[0].GetColumnType());
         Assert.Equal(
             [
-                nameof(DatabaseServerConnection.ConnectionTimeOut),
+                nameof(DatabaseServerConnection.ConnectionTimeOut), nameof(DatabaseServerConnection.DatabaseName),
                 nameof(DatabaseServerConnection.DatabaseServerProvider), nameof(DatabaseServerConnection.DbWebAgentId),
                 nameof(DatabaseServerConnection.Encrypt), nameof(DatabaseServerConnection.Id),
                 nameof(DatabaseServerConnection.Name), nameof(DatabaseServerConnection.RemoteDbConnectionName),
